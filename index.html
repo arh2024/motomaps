@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moto Maps</title>
+
+  <!-- Стилі Moto Maps -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- ШАПКА -->
+  <header>
+    <div class="logo">MOTO <span>MAPS</span></div>
+    <button class="avatar" onclick="showProfile()" title="Профіль">🏍️</button>
+  </header>
+
+  <!-- КАРТА -->
+  <div id="map"></div>
+
+  <!-- GPS -->
+  <button class="location-btn" onclick="findMe()" title="Знайти мене">📍</button>
+
+  <!-- ГОЛОВНА КАРТКА -->
+  <div class="ride" id="homeRide">
+    <h2>🏍️ Готовий до мотопоїздки?</h2>
+    <p>Створи мотопоїздку та запроси інших мотоциклістів.</p>
+    <button onclick="openModal()">+ Створити мотопоїздку</button>
+  </div>
+
+  <!-- СПИСОК -->
+  <div id="rideList"></div>
+
+  <!-- ЧАТ -->
+  <div id="chat" class="section" style="display:none;"></div>
+
+  <!-- ПРОФІЛЬ -->
+  <div id="profile" class="section" style="display:none;"></div>
+
+  <!-- НИЖНЄ МЕНЮ -->
+  <nav>
+    <div onclick="showMap()"><span>🗺️</span>Карта</div>
+    <div onclick="showRides()"><span>🏍️</span>Мотопоїздки</div>
+    <div onclick="showChat()"><span>💬</span>Чат</div>
+    <div onclick="showProfile()"><span>👤</span>Профіль</div>
+  </nav>
+
+</div>
+
+<!-- ВІКНО СТВОРЕННЯ МОТОПОЇЗДКИ -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+
+    <span class="close" onclick="closeModal()">×</span>
+
+    <h2>🏍️ Нова мотопоїздка</h2>
+
+    <label for="rideName">Назва</label>
+    <input id="rideName" type="text" placeholder="Наприклад: Вечірня мотопоїздка">
+
+    <label for="rideDate">Дата</label>
+    <input id="rideDate" type="text" placeholder="Наприклад: 12.09.2026">
+
+    <label for="rideTime">Час збору</label>
+    <input id="rideTime" type="text" placeholder="Наприклад: 20:30">
+
+    <label for="ridePeople">Кількість учасників</label>
+    <input id="ridePeople" type="number" min="1" value="10">
+
+    <div id="locationStatus" class="select-location">
+      📍 Точку збору ще не вибрано
+    </div>
+
+    <div class="hint">
+      Натисни «Обрати точку на карті», потім вибери потрібне місце.
+    </div>
+
+    <button class="secondary-btn" onclick="chooseLocation()">
+      📍 Обрати точку на карті
+    </button>
+
+    <button class="create-btn" onclick="saveRide()">
+      Створити мотопоїздку
+    </button>
+
+    <button class="cancel-btn" onclick="closeModal()">
+      Скасувати
+    </button>
+
+  </div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
