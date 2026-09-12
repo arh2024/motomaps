@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Moto Maps</title>
 
-  <!-- Стилі Moto Maps -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Leaflet -->
@@ -17,89 +16,297 @@
 <div class="app">
 
   <!-- ШАПКА -->
-  <header>
-    <div class="logo">MOTO <span>MAPS</span></div>
-    <button class="avatar" onclick="showProfile()" title="Профіль">🏍️</button>
+  <header class="top-header">
+
+    <div class="brand">
+      <div class="brand-icon">🏍️</div>
+
+      <div>
+        <div class="logo">Moto Maps</div>
+        <div class="tagline">Люди. Маршрути. Пригоди.</div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="icon-btn" title="Сповіщення">
+        🔔
+      </button>
+
+      <button class="avatar" onclick="showProfile()" title="Профіль">
+        🏍️
+      </button>
+    </div>
+
   </header>
+
+
+  <!-- ПОШУК -->
+  <div class="search-box">
+
+    <span class="search-icon">🔍</span>
+
+    <input
+      type="text"
+      placeholder="Пошук місць, маршрутів, людей..."
+    >
+
+    <button class="filter-btn" title="Фільтри">
+      ☷
+    </button>
+
+  </div>
+
+
+  <!-- ФІЛЬТРИ -->
+  <div class="map-filters">
+
+    <button class="filter-chip active">
+      👥 Мотоциклісти
+    </button>
+
+    <button class="filter-chip">
+      🏍️ Мотопоїздки
+    </button>
+
+    <button class="filter-chip">
+      🔧 СТО
+    </button>
+
+    <button class="filter-chip">
+      📍 Цікаві місця
+    </button>
+
+  </div>
+
 
   <!-- КАРТА -->
   <div id="map"></div>
 
-  <!-- GPS -->
-  <button class="location-btn" onclick="findMe()" title="Знайти мене">📍</button>
 
-  <!-- ГОЛОВНА КАРТКА -->
-  <div class="ride" id="homeRide">
-    <h2>🏍️ Готовий до мотопоїздки?</h2>
-    <p>Створи мотопоїздку та запроси інших мотоциклістів.</p>
-    <button onclick="openModal()">+ Створити мотопоїздку</button>
+  <!-- ПОГОДА -->
+  <div class="weather-card">
+    <div class="weather-icon">☀️</div>
+
+    <div>
+      <strong>+24°C</strong>
+      <span>Ясно</span>
+    </div>
   </div>
 
-  <!-- СПИСОК -->
+
+  <!-- КЕРУВАННЯ КАРТОЮ -->
+  <div class="map-controls">
+
+    <button
+      class="map-control location-control"
+      onclick="findMe()"
+      title="Знайти мене">
+      ➤
+    </button>
+
+    <button class="map-control">
+      +
+    </button>
+
+    <button class="map-control">
+      −
+    </button>
+
+  </div>
+
+
+  <!-- КАРТКА МІСЦЯ -->
+  <div class="place-card">
+
+    <div class="place-image">
+      🏞️
+    </div>
+
+    <div class="place-info">
+      <strong>Хортиця</strong>
+      <span>Популярне місце</span>
+      <small>📍 2.4 км</small>
+    </div>
+
+    <div class="place-arrow">
+      ›
+    </div>
+
+  </div>
+
+
+  <!-- ГОЛОВНА КНОПКА -->
+  <button
+    class="go-button"
+    onclick="openModal()"
+    title="Створити мотопоїздку">
+
+    <span class="go-icon">🏍️</span>
+    <span>ПОЇХАЛИ</span>
+
+  </button>
+
+
+  <!-- СПИСОК МОТОПОЇЗДОК -->
   <div id="rideList"></div>
+
 
   <!-- ЧАТ -->
   <div id="chat" class="section" style="display:none;"></div>
 
+
   <!-- ПРОФІЛЬ -->
   <div id="profile" class="section" style="display:none;"></div>
 
+
   <!-- НИЖНЄ МЕНЮ -->
   <nav>
-    <div onclick="showMap()"><span>🗺️</span>Карта</div>
-    <div onclick="showRides()"><span>🏍️</span>Мотопоїздки</div>
-    <div onclick="showChat()"><span>💬</span>Чат</div>
-    <div onclick="showProfile()"><span>👤</span>Профіль</div>
+
+    <div onclick="showMap()" class="nav-item active">
+      <span>🗺️</span>
+      <small>Карта</small>
+    </div>
+
+    <div onclick="showRides()" class="nav-item">
+      <span>👥</span>
+      <small>Спільнота</small>
+    </div>
+
+    <div class="nav-item">
+      <span>🛣️</span>
+      <small>Маршрути</small>
+    </div>
+
+    <div onclick="showChat()" class="nav-item">
+      <span>💬</span>
+      <small>Чати</small>
+    </div>
+
+    <div onclick="showProfile()" class="nav-item">
+      <span>👤</span>
+      <small>Профіль</small>
+    </div>
+
   </nav>
 
 </div>
 
+
+<!-- ====================================== -->
 <!-- ВІКНО СТВОРЕННЯ МОТОПОЇЗДКИ -->
+<!-- ====================================== -->
+
 <div id="modal" class="modal">
+
   <div class="modal-content">
 
-    <span class="close" onclick="closeModal()">×</span>
+    <span
+      class="close"
+      onclick="closeModal()">
+      ×
+    </span>
 
     <h2>🏍️ Нова мотопоїздка</h2>
 
-    <label for="rideName">Назва</label>
-    <input id="rideName" type="text" placeholder="Наприклад: Вечірня мотопоїздка">
+    <label for="rideName">
+      Назва
+    </label>
 
-    <label for="rideDate">Дата</label>
-    <input id="rideDate" type="text" placeholder="Наприклад: 12.09.2026">
+    <input
+      id="rideName"
+      type="text"
+      placeholder="Наприклад: Вечірня мотопоїздка"
+    >
 
-    <label for="rideTime">Час збору</label>
-    <input id="rideTime" type="text" placeholder="Наприклад: 20:30">
 
-    <label for="ridePeople">Кількість учасників</label>
-    <input id="ridePeople" type="number" min="1" value="10">
+    <label for="rideDate">
+      Дата
+    </label>
 
-    <div id="locationStatus" class="select-location">
+    <input
+      id="rideDate"
+      type="text"
+      placeholder="Наприклад: 12.09.2026"
+    >
+
+
+    <label for="rideTime">
+      Час збору
+    </label>
+
+    <input
+      id="rideTime"
+      type="text"
+      placeholder="Наприклад: 20:30"
+    >
+
+
+    <label for="ridePeople">
+      Кількість учасників
+    </label>
+
+    <input
+      id="ridePeople"
+      type="number"
+      min="1"
+      value="10"
+    >
+
+
+    <div
+      id="locationStatus"
+      class="select-location">
+
       📍 Точку збору ще не вибрано
+
     </div>
+
 
     <div class="hint">
-      Натисни «Обрати точку на карті», потім вибери потрібне місце.
+
+      Натисни «Обрати точку на карті»,
+      потім вибери потрібне місце.
+
     </div>
 
-    <button class="secondary-btn" onclick="chooseLocation()">
+
+    <button
+      class="secondary-btn"
+      onclick="chooseLocation()">
+
       📍 Обрати точку на карті
+
     </button>
 
-    <button class="create-btn" onclick="saveRide()">
+
+    <button
+      class="create-btn"
+      onclick="saveRide()">
+
       Створити мотопоїздку
+
     </button>
 
-    <button class="cancel-btn" onclick="closeModal()">
+
+    <button
+      class="cancel-btn"
+      onclick="closeModal()">
+
       Скасувати
+
     </button>
 
   </div>
+
 </div>
 
+
 <!-- JAVASCRIPT -->
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script src="app.js"></script>
 
 </body>

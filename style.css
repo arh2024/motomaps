@@ -1,333 +1,1256 @@
+/* =========================================
+   MOTO MAPS — ОСНОВНІ СТИЛІ
+   ========================================= */
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+:root {
+  --bg: #071318;
+  --panel: #0d2027;
+  --panel-light: #142c34;
+  --border: #29434b;
+
+  --turquoise: #18d9dc;
+  --turquoise-dark: #0eb5ba;
+
+  --text: #ffffff;
+  --text-secondary: #9fb0b6;
+
+  --danger: #ff4d55;
+}
+
+html,
 body {
-  font-family: Arial, sans-serif;
-  background: #0b0b0b;
-  color: white;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  background: var(--bg);
+  color: var(--text);
 }
 
-button,
-input,
-textarea {
-  font-family: inherit;
-}
 
-button {
-  cursor: pointer;
-}
+/* =========================================
+   ОСНОВНИЙ КОНТЕЙНЕР
+   ========================================= */
 
 .app {
-  max-width: 600px;
-  margin: auto;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  position: relative;
+
+  width: 100%;
+  height: 100vh;
+
+  overflow: hidden;
+
+  background: var(--bg);
 }
 
-header {
-  height: 75px;
-  padding: 18px 20px;
+
+/* =========================================
+   ШАПКА
+   ========================================= */
+
+.top-header {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 92px;
+
+  z-index: 1000;
+
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 22px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(7, 19, 24, 0.98),
+      rgba(7, 19, 24, 0.90)
+    );
+
+  backdrop-filter: blur(12px);
 }
 
-.logo {
-  font-size: 25px;
-  font-weight: 800;
-  letter-spacing: 1px;
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.logo span {
-  color: #ff5a00;
-}
 
-.avatar {
-  width: 42px;
-  height: 42px;
-  border: 0;
-  border-radius: 50%;
-  background: #202020;
-  color: white;
+.brand-icon {
+  width: 52px;
+  height: 52px;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  font-size: 30px;
+
+  border-radius: 16px;
+
+  background: rgba(24, 217, 220, 0.12);
+
+  border: 1px solid rgba(24, 217, 220, 0.35);
+}
+
+
+.logo {
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+
+.tagline {
+  margin-top: 3px;
+
+  font-size: 12px;
+
+  color: var(--text-secondary);
+}
+
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+.icon-btn,
+.avatar {
+  width: 44px;
+  height: 44px;
+
+  border: 1px solid var(--border);
+
+  border-radius: 50%;
+
+  background: rgba(13, 32, 39, 0.90);
+
+  color: white;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+.icon-btn {
   font-size: 20px;
 }
 
-#map {
-  height: 430px;
-  margin: 10px 15px;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid #303030;
-}
 
-.location-btn {
-  position: absolute;
-  right: 30px;
-  bottom: 245px;
-  z-index: 1000;
-  width: 52px;
-  height: 52px;
-  border: none;
-  border-radius: 50%;
-  background: #151515;
-  color: white;
-  font-size: 24px;
-}
-
-.ride,
-.ride-card {
-  margin: 5px 15px 15px;
-  padding: 20px;
-  background: #171717;
-  border-radius: 18px;
-  border: 1px solid #292929;
-}
-
-.ride h2,
-.ride-card h2,
-.ride-card h3 {
-  margin-bottom: 10px;
-}
-
-.ride p {
-  color: #aaa;
-  margin-bottom: 15px;
-  line-height: 1.4;
-}
-
-.ride button,
-.create-btn {
-  width: 100%;
-  padding: 15px;
-  border: none;
-  border-radius: 12px;
-  background: #ff5a00;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.ride-info {
-  color: #aaa;
-  line-height: 1.7;
-}
-
-.ride-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.ride-actions button,
-.secondary-btn,
-.cancel-btn {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 10px;
-  font-weight: bold;
-}
-
-.ride-actions button,
-.secondary-btn {
-  background: #303030;
-  color: white;
-}
-
-.cancel-btn {
-  width: 100%;
-  margin-top: 10px;
-  background: #202020;
-  color: #aaa;
-}
-
-.profile-about {
-  color: #aaa;
-  line-height: 1.5;
-}
-
-.section {
-  padding-bottom: 10px;
-}
-
-nav {
-  margin-top: auto;
-  display: flex;
-  justify-content: space-around;
-  padding: 12px 5px 18px;
-  background: #111;
-  border-top: 1px solid #252525;
-}
-
-nav div {
-  text-align: center;
-  color: #777;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-nav span {
-  display: block;
+.avatar {
   font-size: 22px;
-  margin-bottom: 4px;
 }
 
-nav div:first-child {
-  color: #ff5a00;
+
+.icon-btn:hover,
+.avatar:hover {
+  border-color: var(--turquoise);
+
+  transform: scale(1.05);
 }
 
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 2000;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 20px;
-  overflow-y: auto;
+
+/* =========================================
+   ПОШУК
+   ========================================= */
+
+.search-box {
+  position: absolute;
+
+  top: 102px;
+  left: 20px;
+  right: 20px;
+
+  height: 54px;
+
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 15px;
+
+  border-radius: 28px;
+
+  background: rgba(15, 36, 44, 0.94);
+
+  border: 1px solid rgba(102, 137, 147, 0.35);
+
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
-.modal-content {
-  max-width: 500px;
-  margin: 30px auto;
-  background: #181818;
-  border: 1px solid #333;
-  border-radius: 20px;
-  padding: 22px;
+
+.search-icon {
+  font-size: 21px;
+  margin-right: 10px;
 }
 
-.modal-content h2 {
-  margin-bottom: 20px;
-}
 
-.close {
-  float: right;
-  font-size: 28px;
-  color: #aaa;
-  cursor: pointer;
-}
+.search-box input {
+  flex: 1;
 
-label {
-  display: block;
-  margin-top: 14px;
-  margin-bottom: 7px;
-  color: #aaa;
-  font-size: 14px;
-}
+  min-width: 0;
 
-input,
-textarea {
-  width: 100%;
-  padding: 14px;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background: #0d0d0d;
+  border: none;
+  outline: none;
+
+  background: transparent;
+
   color: white;
-  font-size: 16px;
-}
 
-textarea {
-  min-height: 90px;
-  resize: vertical;
-}
-
-.select-location {
-  margin-top: 15px;
-  padding: 14px;
-  background: #252525;
-  border-radius: 10px;
-  color: #ff6a1a;
-  text-align: center;
-  font-weight: bold;
-}
-
-.hint {
-  color: #777;
-  font-size: 13px;
-  margin-top: 8px;
-  line-height: 1.4;
-}
-
-.create-btn {
-  margin-top: 15px;
-}
-
-.secondary-btn,
-.cancel-btn {
-  width: 100%;
-  margin-top: 10px;
   font-size: 15px;
 }
 
-.chat-messages {
-  max-height: 360px;
-  overflow-y: auto;
-  margin-bottom: 10px;
+
+.search-box input::placeholder {
+  color: #91a3aa;
 }
 
-.chat-message {
-  background: #202020;
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 8px;
-}
 
-.chat-author {
-  color: #ff6a1a;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
+.filter-btn {
+  width: 38px;
+  height: 38px;
 
-.chat-time {
-  color: #666;
-  font-size: 11px;
-  margin-top: 5px;
-}
+  border: none;
 
-.chat-form {
-  display: flex;
-  gap: 8px;
-}
+  border-radius: 50%;
 
-.chat-form input {
-  flex: 1;
-}
+  background: transparent;
 
-.chat-form button {
-  width: 100px;
-  border: 0;
-  border-radius: 10px;
-  background: #ff5a00;
   color: white;
-  font-weight: bold;
+
+  font-size: 24px;
+
+  cursor: pointer;
 }
 
-.auth-card {
-  margin: 0 15px 15px;
+
+/* =========================================
+   ФІЛЬТРИ
+   ========================================= */
+
+.map-filters {
+  position: absolute;
+
+  top: 166px;
+  left: 20px;
+  right: 20px;
+
+  z-index: 1000;
+
+  display: flex;
+  gap: 9px;
+
+  overflow-x: auto;
+
+  scrollbar-width: none;
 }
 
-.auth-card input {
-  margin-bottom: 10px;
+
+.map-filters::-webkit-scrollbar {
+  display: none;
 }
 
-@media (max-width: 500px) {
-  #map {
-    height: 400px;
+
+.filter-chip {
+  flex-shrink: 0;
+
+  height: 42px;
+
+  padding: 0 15px;
+
+  border-radius: 22px;
+
+  border: 1px solid var(--border);
+
+  background: rgba(9, 28, 35, 0.94);
+
+  color: white;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  backdrop-filter: blur(8px);
+}
+
+
+.filter-chip.active {
+  background: var(--turquoise);
+
+  border-color: var(--turquoise);
+
+  color: #001517;
+
+  font-weight: 700;
+}
+
+
+.filter-chip:hover {
+  border-color: var(--turquoise);
+}
+
+
+/* =========================================
+   КАРТА
+   ========================================= */
+
+#map {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 1;
+}
+
+
+/* Затемнення карти під інтерфейсом */
+
+#map::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(7, 19, 24, 0.25),
+      transparent 25%,
+      transparent 72%,
+      rgba(7, 19, 24, 0.65)
+    );
+
+  z-index: 400;
+}
+
+
+/* =========================================
+   LEAFLET
+   ========================================= */
+
+.leaflet-control-zoom {
+  display: none;
+}
+
+
+.leaflet-control-attribution {
+  background: rgba(7, 19, 24, 0.75) !important;
+
+  color: #82939a !important;
+
+  font-size: 9px;
+}
+
+
+.leaflet-control-attribution a {
+  color: #9baeb5 !important;
+}
+
+
+/* =========================================
+   ПОГОДА
+   ========================================= */
+
+.weather-card {
+  position: absolute;
+
+  top: 222px;
+  left: 20px;
+
+  z-index: 900;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 16px;
+
+  border-radius: 18px;
+
+  background: rgba(8, 24, 30, 0.92);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+
+.weather-icon {
+  font-size: 26px;
+}
+
+
+.weather-card strong {
+  display: block;
+
+  font-size: 17px;
+}
+
+
+.weather-card span {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 11px;
+
+  color: var(--text-secondary);
+}
+
+
+/* =========================================
+   КЕРУВАННЯ КАРТОЮ
+   ========================================= */
+
+.map-controls {
+  position: absolute;
+
+  top: 225px;
+  right: 20px;
+
+  z-index: 900;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+
+.map-control {
+  width: 48px;
+  height: 48px;
+
+  border-radius: 50%;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  background: rgba(8, 25, 31, 0.92);
+
+  color: white;
+
+  font-size: 25px;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.25);
+
+  transition: 0.2s;
+}
+
+
+.map-control:hover {
+  border-color: var(--turquoise);
+
+  color: var(--turquoise);
+
+  transform: scale(1.05);
+}
+
+
+.location-control {
+  color: var(--turquoise);
+
+  font-size: 24px;
+}
+
+
+/* =========================================
+   КАРТКА ЦІКАВОГО МІСЦЯ
+   ========================================= */
+
+.place-card {
+  position: absolute;
+
+  left: 20px;
+  bottom: 95px;
+
+  width: min(390px, calc(100% - 170px));
+
+  min-height: 82px;
+
+  z-index: 900;
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px;
+
+  border-radius: 20px;
+
+  background: rgba(8, 23, 29, 0.96);
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+
+  backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+
+.place-image {
+  width: 62px;
+  height: 62px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #245b66,
+      #102e36
+    );
+
+  font-size: 27px;
+}
+
+
+.place-info {
+  flex: 1;
+
+  min-width: 0;
+
+  margin-left: 12px;
+}
+
+
+.place-info strong {
+  display: block;
+
+  font-size: 17px;
+}
+
+
+.place-info span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+}
+
+
+.place-info small {
+  display: block;
+
+  margin-top: 5px;
+
+  color: var(--turquoise);
+
+  font-size: 11px;
+}
+
+
+.place-arrow {
+  padding: 0 8px;
+
+  font-size: 32px;
+
+  color: white;
+}
+
+
+/* =========================================
+   ГОЛОВНА КНОПКА «ПОЇХАЛИ»
+   ========================================= */
+
+.go-button {
+  position: fixed;
+
+  right: 22px;
+  bottom: 104px;
+
+  z-index: 1200;
+
+  width: 118px;
+  height: 118px;
+
+  border: none;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 25%,
+      #5ef5f0,
+      var(--turquoise) 55%,
+      var(--turquoise-dark)
+    );
+
+  color: #001719;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 3px;
+
+  font-size: 17px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 0 0 5px rgba(24, 217, 220, 0.12),
+    0 12px 35px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(24, 217, 220, 0.30);
+
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+
+.go-button:hover {
+  transform: scale(1.07);
+
+  box-shadow:
+    0 0 0 7px rgba(24, 217, 220, 0.12),
+    0 16px 40px rgba(0, 0, 0, 0.50),
+    0 0 40px rgba(24, 217, 220, 0.45);
+}
+
+
+.go-button:active {
+  transform: scale(0.96);
+}
+
+
+.go-icon {
+  font-size: 34px;
+
+  line-height: 1;
+}
+
+
+.go-button span:last-child {
+  letter-spacing: 0.5px;
+}
+
+
+/* =========================================
+   НИЖНЄ МЕНЮ
+   ========================================= */
+
+nav {
+  position: fixed;
+
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 76px;
+
+  z-index: 1100;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+
+  padding: 5px 6px 7px;
+
+  background:
+    rgba(5, 17, 22, 0.97);
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(15px);
+}
+
+
+.nav-item {
+  flex: 1;
+
+  height: 66px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  color: #82949b;
+
+  cursor: pointer;
+
+  border-radius: 14px;
+
+  transition: 0.2s;
+}
+
+
+.nav-item span {
+  font-size: 23px;
+
+  line-height: 1;
+}
+
+
+.nav-item small {
+  font-size: 10px;
+}
+
+
+.nav-item.active {
+  color: var(--turquoise);
+}
+
+
+.nav-item:hover {
+  color: var(--turquoise);
+}
+
+
+/* =========================================
+   СЕКЦІЇ
+   ========================================= */
+
+.section {
+  position: absolute;
+
+  inset: 0;
+
+  z-index: 1500;
+
+  background: var(--bg);
+
+  padding: 100px 20px 100px;
+
+  overflow-y: auto;
+}
+
+
+/* =========================================
+   МОДАЛЬНЕ ВІКНО
+   ========================================= */
+
+.modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 3000;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.70);
+
+  backdrop-filter: blur(8px);
+}
+
+
+.modal-content {
+  position: relative;
+
+  width: min(480px, 100%);
+
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  padding: 28px 24px;
+
+  border-radius: 25px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #102830,
+      #09191f
+    );
+
+  border: 1px solid rgba(24, 217, 220, 0.20);
+
+  box-shadow:
+    0 25px 80px rgba(0, 0, 0, 0.60);
+}
+
+
+.modal-content h2 {
+  margin-bottom: 22px;
+
+  font-size: 22px;
+}
+
+
+.close {
+  position: absolute;
+
+  top: 13px;
+  right: 18px;
+
+  font-size: 30px;
+
+  color: #9baeb4;
+
+  cursor: pointer;
+}
+
+
+.close:hover {
+  color: white;
+}
+
+
+.modal-content label {
+  display: block;
+
+  margin-top: 14px;
+  margin-bottom: 7px;
+
+  font-size: 13px;
+
+  color: #aebec3;
+}
+
+
+.modal-content input {
+  width: 100%;
+
+  height: 46px;
+
+  padding: 0 14px;
+
+  border-radius: 12px;
+
+  border: 1px solid var(--border);
+
+  outline: none;
+
+  background: #081920;
+
+  color: white;
+
+  font-size: 14px;
+}
+
+
+.modal-content input:focus {
+  border-color: var(--turquoise);
+
+  box-shadow:
+    0 0 0 2px rgba(24, 217, 220, 0.10);
+}
+
+
+.select-location {
+  margin-top: 16px;
+
+  padding: 14px;
+
+  border-radius: 12px;
+
+  background: rgba(24, 217, 220, 0.08);
+
+  border: 1px solid rgba(24, 217, 220, 0.20);
+
+  color: var(--turquoise);
+
+  font-size: 13px;
+}
+
+
+.hint {
+  margin-top: 10px;
+
+  color: #82949b;
+
+  font-size: 12px;
+
+  line-height: 1.5;
+}
+
+
+/* =========================================
+   КНОПКИ МОДАЛЬНОГО ВІКНА
+   ========================================= */
+
+.secondary-btn,
+.create-btn,
+.cancel-btn {
+  width: 100%;
+
+  min-height: 46px;
+
+  margin-top: 14px;
+
+  border-radius: 13px;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+.secondary-btn {
+  border: 1px solid var(--border);
+
+  background: #102830;
+
+  color: white;
+}
+
+
+.secondary-btn:hover {
+  border-color: var(--turquoise);
+
+  color: var(--turquoise);
+}
+
+
+.create-btn {
+  border: none;
+
+  background: var(--turquoise);
+
+  color: #001719;
+}
+
+
+.create-btn:hover {
+  background: #5ceceb;
+
+  transform: translateY(-1px);
+}
+
+
+.cancel-btn {
+  border: none;
+
+  background: transparent;
+
+  color: #8fa1a7;
+}
+
+
+.cancel-btn:hover {
+  color: white;
+}
+
+
+/* =========================================
+   СПИСОК МОТОПОЇЗДОК
+   ========================================= */
+
+#rideList {
+  position: absolute;
+
+  left: 20px;
+  right: 20px;
+
+  top: 270px;
+
+  z-index: 800;
+
+  pointer-events: none;
+}
+
+
+#rideList > * {
+  pointer-events: auto;
+}
+
+
+/* =========================================
+   АНІМАЦІЯ КНОПКИ «ПОЇХАЛИ»
+   ========================================= */
+
+@keyframes goPulse {
+
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(24, 217, 220, 0.35),
+      0 12px 35px rgba(0, 0, 0, 0.45);
   }
 
-  .location-btn {
-    right: 25px;
-    bottom: 220px;
+  70% {
+    box-shadow:
+      0 0 0 14px rgba(24, 217, 220, 0),
+      0 12px 35px rgba(0, 0, 0, 0.45);
   }
 
-  .ride-actions {
-    flex-direction: column;
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(24, 217, 220, 0),
+      0 12px 35px rgba(0, 0, 0, 0.45);
   }
+
+}
+
+
+.go-button {
+  animation: goPulse 3s infinite;
+}
+
+
+/* =========================================
+   МОБІЛЬНА АДАПТАЦІЯ
+   ========================================= */
+
+@media (max-width: 600px) {
+
+  .top-header {
+    height: 82px;
+
+    padding: 10px 14px;
+  }
+
+
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+
+    font-size: 25px;
+  }
+
+
+  .logo {
+    font-size: 20px;
+  }
+
+
+  .tagline {
+    font-size: 10px;
+  }
+
+
+  .icon-btn,
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+
+  .search-box {
+    top: 90px;
+
+    left: 14px;
+    right: 14px;
+
+    height: 50px;
+  }
+
+
+  .map-filters {
+    top: 150px;
+
+    left: 14px;
+    right: 14px;
+  }
+
+
+  .filter-chip {
+    height: 39px;
+
+    padding: 0 13px;
+
+    font-size: 13px;
+  }
+
+
+  .weather-card {
+    top: 202px;
+
+    left: 14px;
+  }
+
+
+  .map-controls {
+    top: 202px;
+
+    right: 14px;
+  }
+
+
+  .map-control {
+    width: 44px;
+    height: 44px;
+  }
+
+
+  .go-button {
+    width: 96px;
+    height: 96px;
+
+    right: 14px;
+    bottom: 88px;
+
+    font-size: 14px;
+  }
+
+
+  .go-icon {
+    font-size: 28px;
+  }
+
+
+  .place-card {
+    left: 14px;
+
+    bottom: 88px;
+
+    width: calc(100% - 128px);
+
+    min-height: 70px;
+
+    padding: 8px;
+  }
+
+
+  .place-image {
+    width: 52px;
+    height: 52px;
+  }
+
+
+  .place-info strong {
+    font-size: 14px;
+  }
+
+
+  .place-info span {
+    font-size: 10px;
+  }
+
+
+  nav {
+    height: 70px;
+  }
+
+
+  .nav-item {
+    height: 60px;
+  }
+
+
+  .nav-item span {
+    font-size: 21px;
+  }
+
+
+  .nav-item small {
+    font-size: 9px;
+  }
+
+
+  .modal {
+    padding: 12px;
+  }
+
+
+  .modal-content {
+    padding: 24px 18px;
+
+    border-radius: 20px;
+  }
+
+}
+
+
+/* =========================================
+   ДУЖЕ МАЛІ ЕКРАНИ
+   ========================================= */
+
+@media (max-width: 380px) {
+
+  .brand-icon {
+    display: none;
+  }
+
+
+  .logo {
+    font-size: 18px;
+  }
+
+
+  .tagline {
+    display: none;
+  }
+
+
+  .filter-chip {
+    font-size: 12px;
+
+    padding: 0 11px;
+  }
+
+
+  .go-button {
+    width: 88px;
+    height: 88px;
+
+    font-size: 12px;
+  }
+
+
+  .go-icon {
+    font-size: 25px;
+  }
+
+
+  .place-card {
+    width: calc(100% - 115px);
+  }
+
 }
