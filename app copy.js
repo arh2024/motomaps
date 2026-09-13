@@ -866,7 +866,30 @@ function openRideOnMap(
     item.marker.openPopup();
   }
 }
+// =========================================================
+// ВІДОБРАЖЕННЯ ПОГОДИ ТІЛЬКИ НА КАРТІ
+// =========================================================
 
+function showWeatherButton() {
+
+  const weatherButton =
+    document.getElementById('weatherButton');
+
+  if (weatherButton) {
+    weatherButton.style.display = 'flex';
+  }
+}
+
+
+function hideWeatherButton() {
+
+  const weatherButton =
+    document.getElementById('weatherButton');
+
+  if (weatherButton) {
+    weatherButton.style.display = 'none';
+  }
+}
 
 // =========================================================
 // ПОКАЗ КАРТИ
@@ -878,6 +901,7 @@ function showMap() {
 
   hideBackButton();
 
+  showWeatherButton();
   const mapElement =
     document.getElementById('map');
 
@@ -1230,30 +1254,36 @@ function getProfile() {
 
 function showProfile() {
 
-  hideAllSections();
+  supabaseClient.auth.getSession().then(({ data }) => {
 
-  showBackButton();
+    if (!data.session) {
+      openAuthModal();
+      return;
+    }
 
-  const profile =
-    document.getElementById(
-      'profile'
+    hideAllSections();
+
+    showBackButton();
+
+    const profile =
+      document.getElementById(
+        'profile'
+      );
+
+    if (!profile) {
+      return;
+    }
+
+    profile.style.display =
+      'block';
+
+    renderProfile();
+
+    setActiveNavigation(
+      4
     );
-
-  if (!profile) {
-
-    return;
-  }
-
-  profile.style.display =
-    'block';
-
-  renderProfile();
-
-  setActiveNavigation(
-    4
-  );
+  });
 }
-
 
 function renderProfile() {
 
@@ -1342,11 +1372,17 @@ function renderProfile() {
       >
         ✏️ Редагувати профіль
       </button>
-
+      <button
+         class="cancel-btn"
+         type="button" 
+         onclick="logoutUser()"
+      >
+            🚪 Вийти
+      </button>
       <button
         class="secondary-btn"
         type="button"
-        onclick="showRegistration()"
+        onclick="openAuthModal()"
       >
         👤 Реєстрація / новий користувач
       </button>
@@ -1422,128 +1458,9 @@ function editProfile() {
 
 function showRegistration() {
 
-  hideAllSections();
+  openAuthModal();
 
-  showBackButton();
-
-  const profile =
-    document.getElementById(
-      'profile'
-    );
-
-  if (!profile) {
-
-    return;
-  }
-
-  profile.style.display =
-    'block';
-
-  profile.innerHTML = `
-
-    <div class="ride-card auth-card">
-
-      <h2>
-        👤 Реєстрація Moto Maps
-      </h2>
-
-      <p class="ride-info">
-
-        Створи обліковий запис Moto Maps.
-        Дані будуть збережені
-        у спільній базі.
-
-      </p>
-
-      <br>
-
-      <label for="regEmail">
-        Email
-      </label>
-
-      <input
-        id="regEmail"
-        type="email"
-        maxlength="120"
-        placeholder="example@email.com"
-        autocomplete="email"
-      >
-
-      <label for="regPassword">
-        Пароль
-      </label>
-
-      <input
-        id="regPassword"
-        type="password"
-        minlength="6"
-        maxlength="100"
-        placeholder="Мінімум 6 символів"
-        autocomplete="new-password"
-      >
-
-      <label for="regNickname">
-        Нік
-      </label>
-
-      <input
-        id="regNickname"
-        type="text"
-        maxlength="40"
-        placeholder="Наприклад: Moto Rider"
-      >
-
-      <label for="regBike">
-        Мотоцикл
-      </label>
-
-      <input
-        id="regBike"
-        type="text"
-        maxlength="60"
-        placeholder="Наприклад: Honda CB500"
-      >
-
-      <label for="regCity">
-        Місто
-      </label>
-
-      <input
-        id="regCity"
-        type="text"
-        maxlength="60"
-        placeholder="Наприклад: Запоріжжя"
-      >
-
-      <label for="regAbout">
-        Про себе
-      </label>
-
-      <textarea
-        id="regAbout"
-        maxlength="300"
-        placeholder="Коротко про себе"
-      ></textarea>
-
-      <button
-        class="create-btn"
-        type="button"
-        onclick="registerUser()"
-      >
-        👤 Зареєструватися
-      </button>
-
-      <button
-        class="cancel-btn"
-        type="button"
-        onclick="showProfile()"
-      >
-        Назад до профілю
-      </button>
-
-    </div>
-
-  `;
+  showRegisterForm();
 }
 
 
@@ -1818,6 +1735,13 @@ function joinRide(
 // =========================================================
 
 function hideAllSections() {
+
+   hideWeatherButton();
+
+  const rideList =
+    document.getElementById(
+      'rideList'
+    );
 
   const rideList =
     document.getElementById(
@@ -2829,3 +2753,385 @@ window.addEventListener(
     );
   }
 );
+// =========================================================
+// АВТОРИЗАЦІЯ — ВХІД / РЕЄСТРАЦІЯ
+// =========================================================
+
+function openAuthModal() {
+
+  const modal =
+    document.getElementById(
+      'authModal'
+    );
+
+  if (!modal) {
+    return;
+  }
+
+  modal.style.display = 'flex';
+
+  showLoginForm();
+}
+
+
+function closeAuthModal() {
+
+  const modal =
+    document.getElementById(
+      'authModal'
+    );
+
+  if (!modal) {
+    return;
+  }
+
+  modal.style.display = 'none';
+}
+
+
+function showLoginForm() {
+  const title = document.getElementById('authModalTitle');
+  const description = document.getElementById('authModalDescription');
+
+  const phoneGroup = document.getElementById('authPhoneGroup');
+  const passwordConfirmGroup = document.getElementById(
+    'authPasswordConfirmGroup'
+  );
+
+  const submitButton = document.getElementById('authSubmitButton');
+
+  const loginTab = document.getElementById('authLoginTab');
+  const registerTab = document.getElementById('authRegisterTab');
+
+  if (title) {
+    title.textContent = 'Вхід у Moto Maps';
+  }
+
+  if (description) {
+    description.textContent = 'Увійди до свого облікового запису.';
+  }
+
+  if (phoneGroup) {
+    phoneGroup.style.display = 'none';
+  }
+
+  if (passwordConfirmGroup) {
+    passwordConfirmGroup.style.display = 'none';
+  }
+
+  if (submitButton) {
+    submitButton.textContent = 'Увійти';
+    submitButton.onclick = loginUser;
+  }
+
+  if (loginTab) {
+    loginTab.classList.add('active');
+  }
+
+  if (registerTab) {
+    registerTab.classList.remove('active');
+  }
+
+  clearAuthMessage();
+}
+
+
+function showRegisterForm() {
+  const title = document.getElementById('authModalTitle');
+  const description = document.getElementById('authModalDescription');
+
+  const phoneGroup = document.getElementById('authPhoneGroup');
+  const passwordConfirmGroup = document.getElementById(
+    'authPasswordConfirmGroup'
+  );
+
+  const submitButton = document.getElementById('authSubmitButton');
+
+  const loginTab = document.getElementById('authLoginTab');
+  const registerTab = document.getElementById('authRegisterTab');
+
+  if (title) {
+    title.textContent = 'Реєстрація в Moto Maps';
+  }
+
+  if (description) {
+    description.textContent =
+      'Створи обліковий запис для участі в мотопоїздках.';
+  }
+
+  if (phoneGroup) {
+    phoneGroup.style.display = 'block';
+  }
+
+  if (passwordConfirmGroup) {
+    passwordConfirmGroup.style.display = 'block';
+  }
+
+  const passwordInput = document.getElementById('authPassword');
+
+  if (passwordInput) {
+    passwordInput.autocomplete = 'new-password';
+  }
+
+  if (submitButton) {
+    submitButton.textContent = 'Зареєструватися';
+    submitButton.onclick = registerUser;
+  }
+
+  if (loginTab) {
+    loginTab.classList.remove('active');
+  }
+
+  if (registerTab) {
+    registerTab.classList.add('active');
+  }
+
+  clearAuthMessage();
+}
+
+
+function clearAuthMessage() {
+  const message = document.getElementById('authMessage');
+
+  if (message) {
+    message.textContent = '';
+  }
+}
+
+
+function showAuthMessage(text) {
+  const message = document.getElementById('authMessage');
+
+  if (message) {
+    message.textContent = text;
+  }
+}
+
+
+// =========================================================
+// ВХІД
+// =========================================================
+
+async function loginUser() {
+  const email = document.getElementById('authEmail')?.value.trim();
+  const password = document.getElementById('authPassword')?.value;
+
+  if (!email || !password) {
+    showAuthMessage('Введи email та пароль.');
+    return;
+  }
+
+  showAuthMessage('Виконується вхід...');
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    showAuthMessage('Не вдалося виконати вхід. Перевір email та пароль.');
+    console.error('Помилка входу:', error);
+    return;
+  }
+
+  showAuthMessage('Вхід виконано успішно.');
+
+  setTimeout(() => {
+    closeAuthModal();
+    showMap();
+  }, 500);
+}
+
+
+// =========================================================
+// РЕЄСТРАЦІЯ
+// =========================================================
+async function registerUser() {
+
+  const email =
+    document.getElementById('authEmail')?.value.trim();
+
+  const phone =
+    document.getElementById('authPhone')?.value.trim();
+
+  const password =
+    document.getElementById('authPassword')?.value;
+
+  const passwordConfirm =
+    document.getElementById(
+      'authPasswordConfirm'
+    )?.value;
+
+
+  if (
+    !email ||
+    !phone ||
+    !password ||
+    !passwordConfirm
+  ) {
+    showAuthMessage(
+      'Заповни всі поля.'
+    );
+    return;
+  }
+
+
+  if (password.length < 6) {
+
+    showAuthMessage(
+      'Пароль має містити щонайменше 6 символів.'
+    );
+
+    return;
+  }
+
+
+  if (password !== passwordConfirm) {
+
+    showAuthMessage(
+      'Паролі не збігаються.'
+    );
+
+    return;
+  }
+
+
+  showAuthMessage(
+    'Створюємо обліковий запис...'
+  );
+
+
+  // Створення користувача в Supabase Auth
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.signUp({
+
+      email,
+
+      password,
+
+      options: {
+        data: {
+          phone
+        }
+      }
+
+    });
+
+
+  if (error) {
+
+    showAuthMessage(
+      'Не вдалося створити обліковий запис.'
+    );
+
+    console.error(
+      'Помилка реєстрації:',
+      error
+    );
+
+    return;
+  }
+
+
+  if (!data.user) {
+
+    showAuthMessage(
+      'Користувача не створено.'
+    );
+
+    return;
+  }
+
+
+  // Створення профілю
+
+  const nickname =
+    email.split('@')[0];
+
+
+  const {
+    error: profileError
+  } =
+    await supabaseClient
+      .from('profiles')
+      .insert({
+
+        id: data.user.id,
+
+        nickname,
+
+        phone,
+
+        city: '',
+
+        about: '',
+
+        avatar_url: null
+
+      });
+
+
+  if (profileError) {
+
+    console.error(
+      'Помилка створення профілю:',
+      profileError
+    );
+
+    showAuthMessage(
+      'Користувача створено, але профіль не створився.'
+    );
+
+    return;
+  }
+
+
+  showAuthMessage(
+    'Обліковий запис успішно створено!'
+  );
+
+
+  setTimeout(() => {
+
+    closeAuthModal();
+
+    showProfile();
+
+  }, 700);
+}
+
+
+// =========================================================
+// GOOGLE — ПІДГОТОВКА
+// =========================================================
+
+async function loginWithGoogle() {
+  showAuthMessage(
+    'Вхід через Google буде доступний після налаштування Google OAuth.'
+  );
+}
+// =========================================================
+// ВИХІД З ОБЛІКОВОГО ЗАПИСУ
+// =========================================================
+
+async function logoutUser() {
+
+  const { error } =
+    await supabaseClient.auth.signOut();
+
+  if (error) {
+
+    console.error(
+      'Помилка виходу:',
+      error
+    );
+
+    return;
+  }
+
+  showMap();
+}

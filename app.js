@@ -866,7 +866,30 @@ function openRideOnMap(
     item.marker.openPopup();
   }
 }
+// =========================================================
+// ВІДОБРАЖЕННЯ ПОГОДИ ТІЛЬКИ НА КАРТІ
+// =========================================================
 
+function showWeatherButton() {
+
+  const weatherButton =
+    document.getElementById('weatherButton');
+
+  if (weatherButton) {
+    weatherButton.style.display = 'flex';
+  }
+}
+
+
+function hideWeatherButton() {
+
+  const weatherButton =
+    document.getElementById('weatherButton');
+
+  if (weatherButton) {
+    weatherButton.style.display = 'none';
+  }
+}
 
 // =========================================================
 // ПОКАЗ КАРТИ
@@ -878,6 +901,7 @@ function showMap() {
 
   hideBackButton();
 
+  showWeatherButton();
   const mapElement =
     document.getElementById('map');
 
@@ -1711,6 +1735,8 @@ function joinRide(
 // =========================================================
 
 function hideAllSections() {
+
+   hideWeatherButton();
 
   const rideList =
     document.getElementById(

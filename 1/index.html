@@ -29,6 +29,22 @@
 
   <main id="map"></main>
 
+  <!-- Кнопка погоди головного екрана -->
+<button
+  id="weatherButton"
+  class="weather-button"
+  type="button"
+  onclick="openWeather()"
+>
+  <span id="weatherButtonIcon">
+    🌤️
+  </span>
+
+  <span id="weatherButtonTemperature">
+    --°C
+  </span>
+</button>
+
 <!-- Універсальна кнопка повернення -->
 <button
   id="backButton"
@@ -117,39 +133,14 @@
       placeholder="Пошук місць, маршрутів, людей..."
       autocomplete="off"
     >
-
-    <button
-      class="filter-btn"
-      type="button"
-      title="Фільтри"
-      aria-label="Фільтри"
-    >
-      ☷
-    </button>
-
-  </div>
+</div>
 
 
  <!-- =====================================================
      КНОПКА ПОГОДИ
      ===================================================== -->
 
-<main id="map"></main>
 
-<button
-  id="weatherButton"
-  class="weather-button"
-  type="button"
-  onclick="openWeather()"
->
-  <span id="weatherButtonIcon">
-    🌤️
-  </span>
-
-  <span id="weatherButtonTemperature">
-    --°C
-  </span>
-</button>
 
 
 <!-- =====================================================
@@ -316,43 +307,7 @@
     </button>
 
   </div>
-
-
-  <!-- =====================================================
-       КАРТКА ЦІКАВОГО МІСЦЯ
-       ===================================================== -->
-<!--
-  <div class="place-card">
-
-    <div class="place-image">
-      🏞️
-    </div>
-
-    <div class="place-info">
-
-      <strong>
-        Хортиця
-      </strong>
-
-      <span>
-        Популярне місце
-      </span>
-
-      <small>
-        📍 2.4 км
-      </small>
-
-    </div>
-  -->
-
-    <div class="place-arrow">
-      ›
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
+<!-- =====================================================
        ГОЛОВНА КНОПКА
        ===================================================== -->
 
@@ -426,17 +381,7 @@
       <span>🗺️</span>
       <small>Карта</small>
     </button>
-<!--
-    <button
-      type="button"
-      onclick="showRides()"
-      class="nav-item"
-    >
-      <span>👥</span>
-      <small>Спільнота</small>
-    </button>
--->
-    <button type="button"
+<button type="button"
        onclick="showRides()"
       class="nav-item"
      >
