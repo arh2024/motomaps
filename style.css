@@ -3851,10 +3851,40 @@ nav {
 }
 
 
-/* Погода нижче фільтрів */
+/* =========================================================
+   ПОГОДА — КОМПАКТНА КНОПКА
+   ========================================================= */
 
-.weather-button {
-  top: 245px !important;
+@media (max-width: 600px) {
+
+  #weatherButton {
+    width: auto !important;
+    max-width: 90px !important;
+    min-width: 0 !important;
+
+    left: 12px !important;
+    right: auto !important;
+
+    padding: 0 12px !important;
+
+    height: 38px !important;
+
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+
+    white-space: nowrap !important;
+  }
+
+  #weatherButtonIcon {
+    display: inline-block !important;
+    width: auto !important;
+  }
+
+  #weatherButtonTemperature {
+    display: inline-block !important;
+    width: auto !important;
+  }
+
 }
 
 
@@ -3865,22 +3895,48 @@ nav {
 @media (max-width: 600px) {
 
   .top-header {
-    height: 235px !important;
+    height: 125px !important;
+  }
+
+  .brand {
+    height: 62px;
+
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .brand-logo-mark {
+    font-size: 25px;
+  }
+
+  .logo {
+    font-size: 23px;
+  }
+
+  .tagline {
+    margin-top: 4px;
+    font-size: 10px;
   }
 
   .search-box {
-    top: 76px !important;
+    top: 76px;
+    left: 16px;
+    right: 16px;
+    height: 56px;
+    padding: 0 18px;
+    border-radius: 28px;
   }
 
-  .map-filters {
-    top: 145px !important;
-  }
-
-  .weather-button {
-    top: 198px !important;
+  .search-box input {
+    font-size: 15px;
   }
 
 }
+
 /* =========================================================
    ПОВЕРТАЄМО ЛОГОТИП НАД ПОШУКОМ
    ========================================================= */
@@ -3987,6 +4043,138 @@ nav {
 
   #rideList .ride-card {
     margin-bottom: 12px;
+  }
+
+}
+/* =========================================================
+   МОТОПОЇЗДКИ — ПОВНОЕКРАННИЙ РЕЖИМ
+   ========================================================= */
+
+#rideList {
+  position: fixed !important;
+
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+
+  box-sizing: border-box !important;
+
+  overflow-y: auto !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #061a20 0%,
+      #07151b 50%,
+      #031116 100%
+    ) !important;
+
+  z-index: 1900 !important;
+}
+
+
+/* =========================================================
+   КНОПКИ У ШАПЦІ — МОБІЛЬНА ВЕРСІЯ
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .header-actions {
+    position: absolute !important;
+
+    top: 10px !important;
+    right: 12px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 8px !important;
+
+    z-index: 2300 !important;
+  }
+
+
+  .header-actions button {
+    width: 42px !important;
+    height: 42px !important;
+
+    margin: 0 !important;
+
+    border-radius: 50% !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+}
+/* =========================================================
+   ЛОГОТИП MOTO MAPS
+   ========================================================= */
+
+.brand-logo-image {
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  display: block;
+
+  border-radius: 50%;
+}
+
+
+/* Контейнер логотипа */
+
+.brand-icon {
+  overflow: hidden;
+}
+
+
+/* Мобільна версія */
+
+@media (max-width: 600px) {
+
+  .brand-icon {
+    width: 58px;
+    height: 58px;
+  }
+
+  .brand-logo-image {
+    width: 100%;
+    height: 100%;
+  }
+
+}
+/* =========================================================
+   ГОТОВИЙ ЛОГОТИП MOTO MAPS
+   ========================================================= 
+*/
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-full-logo {
+  width:70px;
+  height: auto;
+
+  display: block;
+
+  object-fit: contain;
+}
+
+
+@media (max-width: 600px) {
+
+  .brand-full-logo {
+    width: 70px;
+    max-width: 55vw;
   }
 
 }

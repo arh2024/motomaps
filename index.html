@@ -41,56 +41,63 @@
   <!-- =====================================================
        ВЕРХНЯ ПАНЕЛЬ
        ===================================================== -->
+<!-- =====================================================
+     ВЕРХНЯ ПАНЕЛЬ
+     ===================================================== -->
 
-  <header class="top-header">
+<header class="top-header">
 
-    <div class="brand">
+  <div class="brand">
 
-<div class="brand-icon" aria-hidden="true">
-        🏍️
+    <div class="brand-icon">
+
+      <img
+        class="brand-logo-image"
+        src="./img/motomaps-logo.png"
+        alt="Moto Maps"
+      >
+
+    </div>
+
+    <div class="brand-text">
+
+      <div class="logo">
+        Moto Maps
       </div>
 
-      <div class="brand-text">
-
-        <div class="logo">
-          Moto Maps
-        </div>
-
-        <div class="tagline">
-          Люди. Маршрути. Пригоди.
-        </div>
-
+      <div class="tagline">
+        Люди. Маршрути. Пригоди.
       </div>
 
     </div>
 
-
-    <div class="header-actions">
-
-      <button
-        class="icon-btn"
-        type="button"
-        title="Сповіщення"
-        aria-label="Сповіщення"
-      >
-        🔔
-      </button>
-
-      <button
-        class="avatar"
-        type="button"
-        onclick="showProfile()"
-        title="Профіль"
-        aria-label="Профіль"
-      >
-        🏍️
-      </button>
-
-    </div>
-
-  </header>
+  </div>
 
 
+  <div class="header-actions">
+
+    <button
+      class="icon-btn"
+      type="button"
+      title="Сповіщення"
+      aria-label="Сповіщення"
+    >
+      🔔
+    </button>
+
+    <button
+      class="avatar"
+      type="button"
+      onclick="showProfile()"
+      title="Профіль"
+      aria-label="Профіль"
+    >
+      🏍️
+    </button>
+
+  </div>
+
+</header>
   <!-- =====================================================
        ПОШУК
        ===================================================== -->
@@ -123,42 +130,7 @@
   </div>
 
 
-  <!-- =====================================================
-       ФІЛЬТРИ КАРТИ
-       ===================================================== -->
-<div class="map-filters">
-
-  <button
-    class="filter-chip active"
-    type="button"
-  >
-    👥 Мотоциклісти
-  </button>
-
-  <button
-    class="filter-chip"
-    type="button"
-    onclick="showRides()"
-  >
-    🏍️ Мотопоїздки
-  </button>
-
-  <button
-    class="filter-chip"
-    type="button"
-  >
-    🔧 СТО
-  </button>
-
-  <button
-    class="filter-chip"
-    type="button"
-  >
-    📍 Цікаві місця
-  </button>
-
-</div>
-<!-- =====================================================
+ <!-- =====================================================
      КНОПКА ПОГОДИ
      ===================================================== -->
 
