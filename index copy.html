@@ -29,60 +29,75 @@
 
   <main id="map"></main>
 
-
+<!-- Універсальна кнопка повернення -->
+<button
+  id="backButton"
+  class="back-button"
+  type="button"
+  onclick="goBack()"
+>
+  ← Назад
+</button>
   <!-- =====================================================
        ВЕРХНЯ ПАНЕЛЬ
        ===================================================== -->
+<!-- =====================================================
+     ВЕРХНЯ ПАНЕЛЬ
+     ===================================================== -->
 
-  <header class="top-header">
+<header class="top-header">
 
-    <div class="brand">
+  <div class="brand">
 
-      <div class="brand-icon">
-        🏍️
+    <div class="brand-icon">
+
+      <img
+        class="brand-logo-image"
+        src="./img/motomaps-logo.png"
+        alt="Moto Maps"
+      >
+
+    </div>
+
+    <div class="brand-text">
+
+      <div class="logo">
+        Moto Maps
       </div>
 
-      <div class="brand-text">
-
-        <div class="logo">
-          Moto Maps
-        </div>
-
-        <div class="tagline">
-          Люди. Маршрути. Пригоди.
-        </div>
-
+      <div class="tagline">
+        Люди. Маршрути. Пригоди.
       </div>
 
     </div>
 
-
-    <div class="header-actions">
-
-      <button
-        class="icon-btn"
-        type="button"
-        title="Сповіщення"
-        aria-label="Сповіщення"
-      >
-        🔔
-      </button>
-
-      <button
-        class="avatar"
-        type="button"
-        onclick="showProfile()"
-        title="Профіль"
-        aria-label="Профіль"
-      >
-        🏍️
-      </button>
-
-    </div>
-
-  </header>
+  </div>
 
 
+  <div class="header-actions">
+
+    <button
+      class="icon-btn"
+      type="button"
+      title="Сповіщення"
+      aria-label="Сповіщення"
+    >
+      🔔
+    </button>
+
+    <button
+      class="avatar"
+      type="button"
+      onclick="showProfile()"
+      title="Профіль"
+      aria-label="Профіль"
+    >
+      🏍️
+    </button>
+
+  </div>
+
+</header>
   <!-- =====================================================
        ПОШУК
        ===================================================== -->
@@ -115,69 +130,154 @@
   </div>
 
 
-  <!-- =====================================================
-       ФІЛЬТРИ КАРТИ
-       ===================================================== -->
+ <!-- =====================================================
+     КНОПКА ПОГОДИ
+     ===================================================== -->
 
-  <div class="map-filters">
+<button
+  id="weatherButton"
+  class="weather-button"
+  type="button"
+  onclick="openWeather()"
+>
+  <span id="weatherButtonIcon">
+    🌤️
+  </span>
+
+  <span id="weatherButtonTemperature">
+    --°C
+  </span>
+</button>
+
+
+<!-- =====================================================
+     ВІКНО ПОДРОБНОЇ ПОГОДИ
+     ===================================================== -->
+
+<div
+  id="weatherModal"
+  class="weather-modal"
+>
+
+  <div class="weather-modal-content">
 
     <button
-      class="filter-chip active"
+      class="weather-close"
       type="button"
+      onclick="closeWeather()"
     >
-      👥 Мотоциклісти
+      ×
     </button>
 
-    <button
-      class="filter-chip"
-      type="button"
-    >
-      🏍️ Мотопоїздки
-    </button>
 
-    <button
-      class="filter-chip"
-      type="button"
-    >
-      🔧 СТО
-    </button>
+    <h2>
+      🌤️ Погода
+    </h2>
 
-    <button
-      class="filter-chip"
-      type="button"
+
+    <div
+      id="weatherModalLocation"
+      class="weather-modal-location"
     >
-      📍 Цікаві місця
-    </button>
+      📍 Визначення місця...
+    </div>
+
+
+    <!-- Поточна погода -->
+
+    <div class="weather-current">
+
+      <div
+        id="weatherCurrentIcon"
+        class="weather-current-icon"
+      >
+        🌤️
+      </div>
+
+      <div>
+
+        <div
+          id="weatherCurrentTemperature"
+          class="weather-current-temperature"
+        >
+          --°C
+        </div>
+
+        <div
+          id="weatherCurrentDescription"
+        >
+          Визначення погоди...
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="weather-current-details">
+
+      <div>
+        💨
+        <span>Вітер</span>
+
+        <strong id="weatherCurrentWind">
+          -- м/с
+        </strong>
+      </div>
+
+
+      <div>
+        📊
+        <span>Тиск</span>
+
+        <strong id="weatherCurrentPressure">
+          -- гПа
+        </strong>
+      </div>
+
+
+      <div>
+        💧
+        <span>Вологість</span>
+
+        <strong id="weatherCurrentHumidity">
+          --%
+        </strong>
+      </div>
+
+    </div>
+
+
+    <!-- Погода на сьогодні -->
+
+    <h3>
+      Сьогодні
+    </h3>
+
+    <div
+      id="weatherToday"
+      class="weather-day"
+    >
+      Завантаження...
+    </div>
+
+
+    <!-- Прогноз на 3 дні -->
+
+    <h3>
+      Прогноз на 3 дні
+    </h3>
+
+    <div
+      id="weatherForecast"
+      class="weather-forecast"
+    >
+      Завантаження...
+    </div>
 
   </div>
 
-
-  <!-- =====================================================
-       ПОГОДА
-       ===================================================== -->
-
-  <div class="weather-card">
-
-    <div class="weather-icon">
-      ☀️
-    </div>
-
-    <div>
-
-      <strong>
-        +24°C
-      </strong>
-
-      <span>
-        Ясно
-      </span>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
+</div><!-- =====================================================
        КЕРУВАННЯ КАРТОЮ
        ===================================================== -->
 
@@ -219,7 +319,7 @@
   <!-- =====================================================
        КАРТКА ЦІКАВОГО МІСЦЯ
        ===================================================== -->
-
+<!--
   <div class="place-card">
 
     <div class="place-image">
@@ -241,6 +341,7 @@
       </small>
 
     </div>
+  -->
 
     <div class="place-arrow">
       ›
@@ -320,82 +421,43 @@
       onclick="showMap()"
       class="nav-item active"
     >
-
-      <span>
-        🗺️
-      </span>
-
-      <small>
-        Карта
-      </small>
-
+      <span>🗺️</span>
+      <small>Карта</small>
     </button>
-
-
+<!--
     <button
       type="button"
       onclick="showRides()"
       class="nav-item"
     >
-
-      <span>
-        👥
-      </span>
-
-      <small>
-        Спільнота
-      </small>
-
+      <span>👥</span>
+      <small>Спільнота</small>
     </button>
-
-
-    <button
-      type="button"
+-->
+    <button type="button"
+       onclick="showRides()"
       class="nav-item"
-    >
-
-      <span>
-        🛣️
-      </span>
-
-      <small>
-        Маршрути
-      </small>
-
-    </button>
-
+     >
+      <span>🏍️</span>
+      <small>Мотопоїздки</small>
+</button>
 
     <button
       type="button"
       onclick="showChat()"
       class="nav-item"
     >
-
-      <span>
-        💬
-      </span>
-
-      <small>
-        Чати
-      </small>
-
+      <span>💬</span>
+      <small>Чати</small>
     </button>
-
 
     <button
       type="button"
       onclick="showProfile()"
       class="nav-item"
     >
-
-      <span>
-        👤
-      </span>
-
-      <small>
-        Профіль
-      </small>
-
+      <span>👤</span>
+      <small>Профіль</small>
     </button>
 
   </nav>
