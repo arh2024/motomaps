@@ -615,7 +615,189 @@
 
 </div>
 
+<!-- =========================================================
+     МОДАЛЬНЕ ВІКНО — ВХІД / РЕЄСТРАЦІЯ
+     ========================================================= -->
 
+<div
+  id="authModal"
+  class="modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="authModalTitle"
+>
+
+  <div class="modal-content auth-modal-content">
+
+    <button
+      class="close"
+      type="button"
+      onclick="closeAuthModal()"
+      aria-label="Закрити"
+    >
+      ×
+    </button>
+
+
+    <div class="modal-header">
+
+      <div class="modal-icon">
+        🏍️
+      </div>
+
+      <div>
+
+        <h2 id="authModalTitle">
+          Вхід у Moto Maps
+        </h2>
+
+        <p id="authModalDescription">
+          Увійди або створи обліковий запис.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- Перемикач режиму -->
+
+    <div class="auth-tabs">
+
+      <button
+        id="authLoginTab"
+        class="auth-tab active"
+        type="button"
+        onclick="showLoginForm()"
+      >
+        Увійти
+      </button>
+
+      <button
+        id="authRegisterTab"
+        class="auth-tab"
+        type="button"
+        onclick="showRegisterForm()"
+      >
+        Реєстрація
+      </button>
+
+    </div>
+
+
+    <!-- Email -->
+
+    <label for="authEmail">
+      Email
+    </label>
+
+    <input
+      id="authEmail"
+      type="email"
+      placeholder="Введи свій email"
+      autocomplete="email"
+    >
+
+
+    <!-- Номер телефону -->
+
+    <div id="authPhoneGroup" style="display: none;">
+
+      <label for="authPhone">
+        Номер телефону
+      </label>
+
+      <input
+        id="authPhone"
+        type="tel"
+        placeholder="+380 XX XXX XX XX"
+        autocomplete="tel"
+      >
+
+    </div>
+
+
+    <!-- Пароль -->
+
+    <label for="authPassword">
+      Пароль
+    </label>
+
+    <input
+      id="authPassword"
+      type="password"
+      placeholder="Введи пароль"
+      autocomplete="current-password"
+    >
+
+
+    <!-- Повтор пароля -->
+
+    <div id="authPasswordConfirmGroup" style="display: none;">
+
+      <label for="authPasswordConfirm">
+        Повторити пароль
+      </label>
+
+      <input
+        id="authPasswordConfirm"
+        type="password"
+        placeholder="Повтори пароль"
+        autocomplete="new-password"
+      >
+
+    </div>
+
+
+    <!-- Повідомлення -->
+
+    <div
+      id="authMessage"
+      class="auth-message"
+      aria-live="polite"
+    ></div>
+
+
+    <!-- Основна кнопка -->
+
+    <button
+      id="authSubmitButton"
+      class="create-btn"
+      type="button"
+      onclick="loginUser()"
+    >
+      Увійти
+    </button>
+
+
+    <!-- Google -->
+
+    <div class="auth-divider">
+      <span>або</span>
+    </div>
+
+
+    <button
+      id="googleAuthButton"
+      class="secondary-btn"
+      type="button"
+      onclick="loginWithGoogle()"
+    >
+      🌐 Продовжити з Google
+    </button>
+
+
+    <button
+      class="cancel-btn"
+      type="button"
+      onclick="closeAuthModal()"
+    >
+      Скасувати
+    </button>
+
+  </div>
+
+</div>
 <!-- =========================================================
      БІБЛІОТЕКИ
      ========================================================= -->
