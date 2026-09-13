@@ -29,7 +29,15 @@
 
   <main id="map"></main>
 
-
+<!-- Універсальна кнопка повернення -->
+<button
+  id="backButton"
+  class="back-button"
+  type="button"
+  onclick="goBack()"
+>
+  ← Назад
+</button>
   <!-- =====================================================
        ВЕРХНЯ ПАНЕЛЬ
        ===================================================== -->
@@ -119,8 +127,161 @@
        ФІЛЬТРИ КАРТИ
        ===================================================== -->
 
-  <div class="map-filters">
+ 
+  <!-- =====================================================
+       ПОГОДА
+       ===================================================== -->
 
+ <!-- =====================================================
+     КНОПКА ПОГОДИ
+     ===================================================== -->
+
+<button
+  id="weatherButton"
+  class="weather-button"
+  type="button"
+  onclick="openWeather()"
+>
+  <span id="weatherButtonIcon">
+    🌤️
+  </span>
+
+  <span id="weatherButtonTemperature">
+    --°C
+  </span>
+</button>
+
+
+<!-- =====================================================
+     ВІКНО ПОДРОБНОЇ ПОГОДИ
+     ===================================================== -->
+
+<div
+  id="weatherModal"
+  class="weather-modal"
+>
+
+  <div class="weather-modal-content">
+
+    <button
+      class="weather-close"
+      type="button"
+      onclick="closeWeather()"
+    >
+      ×
+    </button>
+
+
+    <h2>
+      🌤️ Погода
+    </h2>
+
+
+    <div
+      id="weatherModalLocation"
+      class="weather-modal-location"
+    >
+      📍 Визначення місця...
+    </div>
+
+
+    <!-- Поточна погода -->
+
+    <div class="weather-current">
+
+      <div
+        id="weatherCurrentIcon"
+        class="weather-current-icon"
+      >
+        🌤️
+      </div>
+
+      <div>
+
+        <div
+          id="weatherCurrentTemperature"
+          class="weather-current-temperature"
+        >
+          --°C
+        </div>
+
+        <div
+          id="weatherCurrentDescription"
+        >
+          Визначення погоди...
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="weather-current-details">
+
+      <div>
+        💨
+        <span>Вітер</span>
+
+        <strong id="weatherCurrentWind">
+          -- м/с
+        </strong>
+      </div>
+
+
+      <div>
+        📊
+        <span>Тиск</span>
+
+        <strong id="weatherCurrentPressure">
+          -- гПа
+        </strong>
+      </div>
+
+
+      <div>
+        💧
+        <span>Вологість</span>
+
+        <strong id="weatherCurrentHumidity">
+          --%
+        </strong>
+      </div>
+
+    </div>
+
+
+    <!-- Погода на сьогодні -->
+
+    <h3>
+      Сьогодні
+    </h3>
+
+    <div
+      id="weatherToday"
+      class="weather-day"
+    >
+      Завантаження...
+    </div>
+
+
+    <!-- Прогноз на 3 дні -->
+
+    <h3>
+      Прогноз на 3 дні
+    </h3>
+
+    <div
+      id="weatherForecast"
+      class="weather-forecast"
+    >
+      Завантаження...
+    </div>
+
+  </div>
+
+</div>
+ <div class="map-filters">
+<!--
     <button
       class="filter-chip active"
       type="button"
@@ -131,6 +292,7 @@
     <button
       class="filter-chip"
       type="button"
+      onclick="showRides()"
     >
       🏍️ Мотопоїздки
     </button>
@@ -138,6 +300,7 @@
     <button
       class="filter-chip"
       type="button"
+      
     >
       🔧 СТО
     </button>
@@ -148,33 +311,9 @@
     >
       📍 Цікаві місця
     </button>
-
+-->
   </div>
 
-
-  <!-- =====================================================
-       ПОГОДА
-       ===================================================== -->
-
-  <div class="weather-card">
-
-    <div class="weather-icon">
-      ☀️
-    </div>
-
-    <div>
-
-      <strong>
-        +24°C
-      </strong>
-
-      <span>
-        Ясно
-      </span>
-
-    </div>
-
-  </div>
 
 
   <!-- =====================================================
@@ -346,12 +485,10 @@
         Спільнота
       </small>
 
-    </button>
-
-
-    <button
+        <button
       type="button"
       class="nav-item"
+      onclick="showCommunity()"
     >
 
       <span>
