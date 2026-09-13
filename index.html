@@ -46,7 +46,7 @@
 
     <div class="brand">
 
-      <div class="brand-icon">
+<div class="brand-icon" aria-hidden="true">
         🏍️
       </div>
 
@@ -126,13 +126,39 @@
   <!-- =====================================================
        ФІЛЬТРИ КАРТИ
        ===================================================== -->
+<div class="map-filters">
 
- 
-  <!-- =====================================================
-       ПОГОДА
-       ===================================================== -->
+  <button
+    class="filter-chip active"
+    type="button"
+  >
+    👥 Мотоциклісти
+  </button>
 
- <!-- =====================================================
+  <button
+    class="filter-chip"
+    type="button"
+    onclick="showRides()"
+  >
+    🏍️ Мотопоїздки
+  </button>
+
+  <button
+    class="filter-chip"
+    type="button"
+  >
+    🔧 СТО
+  </button>
+
+  <button
+    class="filter-chip"
+    type="button"
+  >
+    📍 Цікаві місця
+  </button>
+
+</div>
+<!-- =====================================================
      КНОПКА ПОГОДИ
      ===================================================== -->
 
@@ -279,44 +305,7 @@
 
   </div>
 
-</div>
- <div class="map-filters">
-<!--
-    <button
-      class="filter-chip active"
-      type="button"
-    >
-      👥 Мотоциклісти
-    </button>
-
-    <button
-      class="filter-chip"
-      type="button"
-      onclick="showRides()"
-    >
-      🏍️ Мотопоїздки
-    </button>
-
-    <button
-      class="filter-chip"
-      type="button"
-      
-    >
-      🔧 СТО
-    </button>
-
-    <button
-      class="filter-chip"
-      type="button"
-    >
-      📍 Цікаві місця
-    </button>
--->
-  </div>
-
-
-
-  <!-- =====================================================
+</div><!-- =====================================================
        КЕРУВАННЯ КАРТОЮ
        ===================================================== -->
 
@@ -459,80 +448,44 @@
       onclick="showMap()"
       class="nav-item active"
     >
-
-      <span>
-        🗺️
-      </span>
-
-      <small>
-        Карта
-      </small>
-
+      <span>🗺️</span>
+      <small>Карта</small>
     </button>
-
 
     <button
       type="button"
       onclick="showRides()"
       class="nav-item"
     >
-
-      <span>
-        👥
-      </span>
-
-      <small>
-        Спільнота
-      </small>
-
-        <button
-      type="button"
-      class="nav-item"
-      onclick="showCommunity()"
-    >
-
-      <span>
-        🛣️
-      </span>
-
-      <small>
-        Маршрути
-      </small>
-
+      <span>👥</span>
+      <small>Спільнота</small>
     </button>
 
+    <button
+      type="button"
+      onclick="showCommunity()"
+      class="nav-item"
+    >
+      <span>🛣️</span>
+      <small>Маршрути</small>
+    </button>
 
     <button
       type="button"
       onclick="showChat()"
       class="nav-item"
     >
-
-      <span>
-        💬
-      </span>
-
-      <small>
-        Чати
-      </small>
-
+      <span>💬</span>
+      <small>Чати</small>
     </button>
-
 
     <button
       type="button"
       onclick="showProfile()"
       class="nav-item"
     >
-
-      <span>
-        👤
-      </span>
-
-      <small>
-        Профіль
-      </small>
-
+      <span>👤</span>
+      <small>Профіль</small>
     </button>
 
   </nav>

@@ -1,18 +1,29 @@
 /* =========================================================
+
    MOTO MAPS
+
    ОСНОВНІ СТИЛІ ІНТЕРФЕЙСУ
+
    ========================================================= */
+
 
 
 /* =========================================================
+
    RESET
+
    ========================================================= */
 
 * {
+
   box-sizing: border-box;
+
   margin: 0;
+
   padding: 0;
+
 }
+
 
 
 :root {
@@ -44,6 +55,7 @@
   --danger: #ff4d55;
 
   --shadow:
+
     0 12px 40px rgba(0, 0, 0, 0.38);
 
   --nav-height: 76px;
@@ -51,17 +63,23 @@
 }
 
 
+
 html,
+
 body {
 
   width: 100%;
+
   height: 100%;
 
   overflow: hidden;
 
   font-family:
+
     Arial,
+
     Helvetica,
+
     sans-serif;
 
   background: var(--bg);
@@ -71,8 +89,11 @@ body {
 }
 
 
+
 /* =========================================================
+
    ОСНОВНИЙ КОНТЕЙНЕР
+
    ========================================================= */
 
 .app {
@@ -80,6 +101,7 @@ body {
   position: relative;
 
   width: 100vw;
+
   height: 100vh;
 
   overflow: hidden;
@@ -89,8 +111,11 @@ body {
 }
 
 
+
 /* =========================================================
+
    КАРТА
+
    ========================================================= */
 
 #map {
@@ -100,6 +125,7 @@ body {
   inset: 0;
 
   width: 100%;
+
   height: 100%;
 
   z-index: 1;
@@ -107,34 +133,38 @@ body {
 }
 
 
-/* Затемнення карти */
+
+/* =========================================================
+   ТЕМНЕ ОФОРМЛЕННЯ СУПУТНИКОВОЇ КАРТИ
+   ========================================================= */
 
 #map::after {
-
   content: "";
 
   position: absolute;
-
   inset: 0;
+
+  z-index: 400;
 
   pointer-events: none;
 
   background:
     linear-gradient(
-      to bottom,
-      rgba(5, 16, 21, 0.42) 0%,
-      rgba(5, 16, 21, 0.05) 24%,
-      rgba(5, 16, 21, 0) 55%,
-      rgba(5, 16, 21, 0.62) 100%
+      180deg,
+      rgba(3, 18, 24, 0.18) 0%,
+      rgba(3, 18, 24, 0.08) 35%,
+      rgba(3, 18, 24, 0.30) 100%
     );
 
-  z-index: 400;
-
+  mix-blend-mode: multiply;
 }
 
 
+
 /* =========================================================
+
    LEAFLET
+
    ========================================================= */
 
 .leaflet-control-zoom {
@@ -144,12 +174,15 @@ body {
 }
 
 
+
 .leaflet-control-attribution {
 
   background:
+
     rgba(5, 16, 21, 0.78) !important;
 
   color:
+
     #71858c !important;
 
   border-radius: 8px 0 0 0;
@@ -161,20 +194,27 @@ body {
 }
 
 
+
 .leaflet-control-attribution a {
 
   color:
+
     #8da0a7 !important;
 
 }
 
 /* =========================================================
+
    КНОПКА ПОВЕРНЕННЯ
+
    ========================================================= */
 
 .back-button {
+
   position: fixed;
+
   top: 90px;
+
   left: 20px;
 
   z-index: 2000;
@@ -184,6 +224,7 @@ body {
   padding: 10px 16px;
 
   border: 1px solid rgba(0, 255, 220, 0.35);
+
   border-radius: 14px;
 
   background: rgba(10, 20, 25, 0.88);
@@ -191,6 +232,7 @@ body {
   color: #ffffff;
 
   font-size: 15px;
+
   font-weight: 600;
 
   cursor: pointer;
@@ -198,22 +240,31 @@ body {
   backdrop-filter: blur(10px);
 
   transition:
+
     transform 0.2s,
+
     border-color 0.2s,
+
     background 0.2s;
+
 }
 
 .back-button:hover {
+
   transform: translateY(-1px);
 
   border-color: rgba(0, 255, 220, 0.8);
 
   background: rgba(15, 30, 35, 0.95);
+
 }
 
 .back-button:active {
+
   transform: scale(0.97);
+
 }
+
 
 
 /* На телефоні */
@@ -221,17 +272,23 @@ body {
 @media (max-width: 600px) {
 
   .back-button {
+
     top: 82px;
+
     left: 12px;
 
     padding: 9px 14px;
 
     font-size: 14px;
+
   }
 
 }
+
 /* =========================================================
+
    ВЕРХНЯ ПАНЕЛЬ
+
    ========================================================= */
 
 .top-header {
@@ -239,7 +296,9 @@ body {
   position: absolute;
 
   top: 0;
+
   left: 0;
+
   right: 0;
 
   height: 92px;
@@ -255,15 +314,21 @@ body {
   padding: 14px 22px;
 
   background:
+
     linear-gradient(
+
       to bottom,
+
       rgba(5, 16, 21, 0.98),
+
       rgba(5, 16, 21, 0.78)
+
     );
 
   backdrop-filter: blur(14px);
 
 }
+
 
 
 .brand {
@@ -276,10 +341,10 @@ body {
 
 }
 
-
 .brand-icon {
 
   width: 52px;
+
   height: 52px;
 
   flex-shrink: 0;
@@ -287,22 +352,57 @@ body {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
-  border-radius: 16px;
+  gap: 0;
 
-  background:
-    rgba(24, 217, 220, 0.12);
+  border-radius: 14px;
 
-  border:
-    1px solid rgba(24, 217, 220, 0.34);
+ border-radius: 50%;
 
-  font-size: 29px;
+background:
 
-  box-shadow:
-    0 0 25px rgba(24, 217, 220, 0.08);
+  rgba(24, 217, 220, 0.10);
+
+border:
+
+  1px solid rgba(24, 217, 220, 0.35);
 
 }
+
+
+
+/* MOTO */
+
+.logo-moto {
+
+  color: #ffffff;
+
+  font-size: 21px;
+
+  font-weight: 900;
+
+  letter-spacing: 1px;
+
+}
+
+
+
+/* MAPS */
+
+.logo-maps {
+
+  color: var(--turquoise);
+
+  font-size: 21px;
+
+  font-weight: 900;
+
+  letter-spacing: 1px;
+
+}
+
 
 
 .logo {
@@ -316,16 +416,19 @@ body {
 }
 
 
+
 .tagline {
 
   margin-top: 3px;
 
   color:
+
     var(--text-secondary);
 
   font-size: 12px;
 
 }
+
 
 
 .header-actions {
@@ -339,23 +442,29 @@ body {
 }
 
 
+
 .icon-btn,
+
 .avatar {
 
   width: 44px;
+
   height: 44px;
 
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   border:
+
     1px solid var(--border);
 
   border-radius: 50%;
 
   background:
+
     rgba(10, 29, 36, 0.92);
 
   color: white;
@@ -363,11 +472,15 @@ body {
   cursor: pointer;
 
   transition:
+
     transform 0.2s,
+
     border-color 0.2s,
+
     background 0.2s;
 
 }
+
 
 
 .icon-btn {
@@ -377,6 +490,7 @@ body {
 }
 
 
+
 .avatar {
 
   font-size: 21px;
@@ -384,23 +498,31 @@ body {
 }
 
 
+
 .icon-btn:hover,
+
 .avatar:hover {
 
   border-color:
+
     var(--turquoise);
 
   background:
+
     rgba(24, 217, 220, 0.12);
 
   transform:
+
     scale(1.05);
 
 }
 
 
+
 /* =========================================================
+
    ПОШУК
+
    ========================================================= */
 
 .search-box {
@@ -410,6 +532,7 @@ body {
   top: 102px;
 
   left: 20px;
+
   right: 20px;
 
   height: 54px;
@@ -421,22 +544,27 @@ body {
   align-items: center;
 
   padding:
+
     0 10px 0 16px;
 
   border:
+
     1px solid rgba(117, 151, 160, 0.32);
 
   border-radius: 28px;
 
   background:
+
     rgba(12, 32, 40, 0.94);
 
   backdrop-filter: blur(14px);
 
   box-shadow:
+
     0 8px 30px rgba(0, 0, 0, 0.26);
 
 }
+
 
 
 .search-icon {
@@ -448,6 +576,7 @@ body {
   font-size: 20px;
 
 }
+
 
 
 .search-box input {
@@ -471,17 +600,21 @@ body {
 }
 
 
+
 .search-box input::placeholder {
 
   color:
+
     #899ca3;
 
 }
 
 
+
 .filter-btn {
 
   width: 38px;
+
   height: 38px;
 
   flex-shrink: 0;
@@ -491,6 +624,7 @@ body {
   border-radius: 50%;
 
   background:
+
     transparent;
 
   color: white;
@@ -500,46 +634,135 @@ body {
   cursor: pointer;
 
   transition:
+
     0.2s;
 
 }
 
 
+
 .filter-btn:hover {
 
   background:
+
     rgba(255, 255, 255, 0.08);
 
   color:
+
     var(--turquoise);
 
 }
 
 
+
 /* =========================================================
+
    ФІЛЬТРИ
+
+   ========================================================= */
+
+/* =========================================================
+   ФІЛЬТРИ КАРТИ
    ========================================================= */
 
 .map-filters {
-
   position: absolute;
-
-  top: 166px;
-
+  top: 128px;
   left: 20px;
   right: 20px;
-
-  z-index: 1000;
+  z-index: 1500;
 
   display: flex;
-
-  gap: 9px;
+  gap: 8px;
 
   overflow-x: auto;
+  padding: 4px 2px 8px;
 
   scrollbar-width: none;
-
 }
+
+.map-filters::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* =========================================================
+   КНОПКА ФІЛЬТРУ
+   ========================================================= */
+
+.filter-chip {
+  flex: 0 0 auto;
+
+  padding: 9px 14px;
+
+  border: 1px solid rgba(24, 217, 220, 0.28);
+  border-radius: 18px;
+
+  background: rgba(7, 24, 30, 0.88);
+
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 5px 16px rgba(0, 0, 0, 0.22);
+
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+
+/* =========================================================
+   АКТИВНИЙ ФІЛЬТР
+   ========================================================= */
+
+.filter-chip.active {
+  background: rgba(24, 217, 220, 0.18);
+
+  border-color:
+    rgba(24, 217, 220, 0.75);
+
+  color: #ffffff;
+
+  box-shadow:
+    0 0 14px rgba(24, 217, 220, 0.22);
+}
+
+
+.filter-chip:active {
+  transform: scale(0.96);
+}
+
+
+/* =========================================================
+   МОБІЛЬНА ВЕРСІЯ
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .map-filters {
+    top: 128px;
+    left: 14px;
+    right: 14px;
+
+    gap: 7px;
+  }
+
+  .filter-chip {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
 
 
 .map-filters::-webkit-scrollbar {
@@ -549,6 +772,7 @@ body {
 }
 
 
+
 .filter-chip {
 
   flex-shrink: 0;
@@ -556,14 +780,17 @@ body {
   height: 42px;
 
   padding:
+
     0 15px;
 
   border:
+
     1px solid var(--border);
 
   border-radius: 22px;
 
   background:
+
     rgba(8, 28, 35, 0.94);
 
   color: white;
@@ -575,110 +802,52 @@ body {
   backdrop-filter: blur(10px);
 
   transition:
+
     0.2s;
 
 }
 
 
+
 .filter-chip:hover {
 
   border-color:
+
     var(--turquoise);
 
 }
+
 
 
 .filter-chip.active {
 
   border-color:
+
     var(--turquoise);
 
   background:
+
     var(--turquoise);
 
   color:
+
     #001719;
 
   font-weight: 700;
 
   box-shadow:
+
     0 5px 20px rgba(24, 217, 220, 0.16);
 
 }
 
 
-/* =========================================================
-   ПОГОДА
-   ========================================================= */
-
-.weather-card {
-
-  position: absolute;
-
-  top: 222px;
-
-  left: 20px;
-
-  z-index: 900;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding:
-    10px 16px;
-
-  border:
-    1px solid rgba(255, 255, 255, 0.08);
-
-  border-radius: 18px;
-
-  background:
-    rgba(7, 24, 30, 0.92);
-
-  backdrop-filter: blur(12px);
-
-  box-shadow:
-    0 8px 25px rgba(0, 0, 0, 0.25);
-
-}
-
-
-.weather-icon {
-
-  font-size: 26px;
-
-}
-
-
-.weather-card strong {
-
-  display: block;
-
-  font-size: 17px;
-
-}
-
-
-.weather-card span {
-
-  display: block;
-
-  margin-top: 2px;
-
-  color:
-    var(--text-secondary);
-
-  font-size: 11px;
-
-}
-
 
 /* =========================================================
    КЕРУВАННЯ КАРТОЮ
-   ========================================================= */
+   ========================================================= 
+
+   ======================================================= */
 
 .map-controls {
 
@@ -699,22 +868,27 @@ body {
 }
 
 
+
 .map-control {
 
   width: 48px;
+
   height: 48px;
 
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   border:
+
     1px solid rgba(255, 255, 255, 0.14);
 
   border-radius: 50%;
 
   background:
+
     rgba(7, 24, 30, 0.94);
 
   color: white;
@@ -726,31 +900,39 @@ body {
   backdrop-filter: blur(10px);
 
   box-shadow:
+
     0 6px 20px rgba(0, 0, 0, 0.25);
 
   transition:
+
     0.2s;
 
 }
 
 
+
 .map-control:hover {
 
   border-color:
+
     var(--turquoise);
 
   color:
+
     var(--turquoise);
 
   transform:
+
     scale(1.05);
 
 }
 
 
+
 .location-control {
 
   color:
+
     var(--turquoise);
 
   font-size: 23px;
@@ -758,8 +940,11 @@ body {
 }
 
 
+
 /* =========================================================
+
    КАРТКА МІСЦЯ
+
    ========================================================= */
 
 .place-card {
@@ -771,6 +956,7 @@ body {
   bottom: 95px;
 
   width:
+
     min(390px, calc(100% - 170px));
 
   min-height: 82px;
@@ -784,24 +970,29 @@ body {
   padding: 10px;
 
   border:
+
     1px solid rgba(255, 255, 255, 0.10);
 
   border-radius: 20px;
 
   background:
+
     rgba(7, 23, 29, 0.96);
 
   backdrop-filter: blur(13px);
 
   box-shadow:
+
     0 10px 30px rgba(0, 0, 0, 0.35);
 
 }
 
 
+
 .place-image {
 
   width: 62px;
+
   height: 62px;
 
   flex-shrink: 0;
@@ -809,20 +1000,27 @@ body {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   border-radius: 14px;
 
   background:
+
     linear-gradient(
+
       135deg,
+
       #245b66,
+
       #102e36
+
     );
 
   font-size: 27px;
 
 }
+
 
 
 .place-info {
@@ -836,6 +1034,7 @@ body {
 }
 
 
+
 .place-info strong {
 
   display: block;
@@ -845,6 +1044,7 @@ body {
 }
 
 
+
 .place-info span {
 
   display: block;
@@ -852,11 +1052,13 @@ body {
   margin-top: 4px;
 
   color:
+
     var(--text-secondary);
 
   font-size: 12px;
 
 }
+
 
 
 .place-info small {
@@ -866,6 +1068,7 @@ body {
   margin-top: 5px;
 
   color:
+
     var(--turquoise);
 
   font-size: 11px;
@@ -873,9 +1076,11 @@ body {
 }
 
 
+
 .place-arrow {
 
   padding:
+
     0 8px;
 
   color: white;
@@ -885,8 +1090,11 @@ body {
 }
 
 
+
 /* =========================================================
+
    КНОПКА «ПОЇХАЛИ»
+
    ========================================================= */
 
 .go-button {
@@ -898,6 +1106,7 @@ body {
   bottom: 104px;
 
   width: 118px;
+
   height: 118px;
 
   z-index: 1200;
@@ -907,6 +1116,7 @@ body {
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
   gap: 3px;
@@ -916,14 +1126,21 @@ body {
   border-radius: 50%;
 
   background:
+
     radial-gradient(
+
       circle at 35% 25%,
+
       var(--turquoise-light),
+
       var(--turquoise) 55%,
+
       var(--turquoise-dark)
+
     );
 
   color:
+
     #001719;
 
   font-size: 17px;
@@ -933,36 +1150,49 @@ body {
   cursor: pointer;
 
   box-shadow:
+
     0 0 0 5px rgba(24, 217, 220, 0.12),
+
     0 12px 35px rgba(0, 0, 0, 0.45),
+
     0 0 30px rgba(24, 217, 220, 0.30);
 
   transition:
+
     transform 0.2s,
+
     box-shadow 0.2s;
 
 }
 
 
+
 .go-button:hover {
 
   transform:
+
     scale(1.07);
 
   box-shadow:
+
     0 0 0 7px rgba(24, 217, 220, 0.12),
+
     0 16px 40px rgba(0, 0, 0, 0.50),
+
     0 0 40px rgba(24, 217, 220, 0.45);
 
 }
 
 
+
 .go-button:active {
 
   transform:
+
     scale(0.96);
 
 }
+
 
 
 .go-icon {
@@ -974,6 +1204,7 @@ body {
 }
 
 
+
 .go-button span:last-child {
 
   letter-spacing: 0.5px;
@@ -981,8 +1212,11 @@ body {
 }
 
 
+
 /* =========================================================
+
    АНІМАЦІЯ «ПОЇХАЛИ»
+
    ========================================================= */
 
 @keyframes goPulse {
@@ -990,7 +1224,9 @@ body {
   0% {
 
     box-shadow:
+
       0 0 0 0 rgba(24, 217, 220, 0.34),
+
       0 12px 35px rgba(0, 0, 0, 0.45);
 
   }
@@ -998,7 +1234,9 @@ body {
   70% {
 
     box-shadow:
+
       0 0 0 14px rgba(24, 217, 220, 0),
+
       0 12px 35px rgba(0, 0, 0, 0.45);
 
   }
@@ -1006,7 +1244,9 @@ body {
   100% {
 
     box-shadow:
+
       0 0 0 0 rgba(24, 217, 220, 0),
+
       0 12px 35px rgba(0, 0, 0, 0.45);
 
   }
@@ -1014,16 +1254,21 @@ body {
 }
 
 
+
 .go-button {
 
   animation:
+
     goPulse 3s infinite;
 
 }
 
 
+
 /* =========================================================
+
    НИЖНЯ НАВІГАЦІЯ
+
    ========================================================= */
 
 nav {
@@ -1031,11 +1276,13 @@ nav {
   position: fixed;
 
   left: 0;
+
   right: 0;
 
   bottom: 0;
 
   height:
+
     var(--nav-height);
 
   z-index: 1100;
@@ -1047,18 +1294,23 @@ nav {
   justify-content: space-around;
 
   padding:
+
     5px 6px 7px;
 
   background:
+
     rgba(5, 17, 22, 0.97);
 
   border-top:
+
     1px solid rgba(255, 255, 255, 0.08);
 
   backdrop-filter:
+
     blur(15px);
 
 }
+
 
 
 .nav-item {
@@ -1072,6 +1324,7 @@ nav {
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
   gap: 4px;
@@ -1083,6 +1336,7 @@ nav {
   background: transparent;
 
   color:
+
     #82949b;
 
   cursor: pointer;
@@ -1090,9 +1344,11 @@ nav {
   font-family: inherit;
 
   transition:
+
     0.2s;
 
 }
+
 
 
 .nav-item span {
@@ -1104,6 +1360,7 @@ nav {
 }
 
 
+
 .nav-item small {
 
   font-size: 10px;
@@ -1111,27 +1368,35 @@ nav {
 }
 
 
+
 .nav-item.active {
 
   color:
+
     var(--turquoise);
 
 }
+
 
 
 .nav-item:hover {
 
   color:
+
     var(--turquoise);
 
   background:
+
     rgba(24, 217, 220, 0.05);
 
 }
 
 
+
 /* =========================================================
+
    СЕКЦІЇ
+
    ========================================================= */
 
 .section {
@@ -1143,18 +1408,23 @@ nav {
   z-index: 1500;
 
   padding:
+
     100px 20px 100px;
 
   overflow-y: auto;
 
   background:
+
     var(--bg);
 
 }
 
 
+
 /* =========================================================
+
    СПИСОК МОТОПОЇЗДОК
+
    ========================================================= */
 
 #rideList {
@@ -1164,6 +1434,7 @@ nav {
   top: 270px;
 
   left: 20px;
+
   right: 20px;
 
   z-index: 800;
@@ -1171,6 +1442,7 @@ nav {
   pointer-events: none;
 
   max-height:
+
     calc(100vh - 360px);
 
   overflow-y: auto;
@@ -1180,6 +1452,7 @@ nav {
 }
 
 
+
 #rideList > * {
 
   pointer-events: auto;
@@ -1187,8 +1460,11 @@ nav {
 }
 
 
+
 /* =========================================================
+
    КАРТКА МОТОПОЇЗДКИ
+
    ========================================================= */
 
 .ride-card {
@@ -1198,29 +1474,39 @@ nav {
   padding: 18px;
 
   border:
+
     1px solid var(--border-light);
 
   border-radius: 20px;
 
   background:
+
     linear-gradient(
+
       145deg,
+
       rgba(16, 41, 49, 0.97),
+
       rgba(7, 24, 30, 0.97)
+
     );
 
   box-shadow:
+
     0 10px 30px rgba(0, 0, 0, 0.28);
 
 }
 
 
+
 .ride-card h2,
+
 .ride-card h3 {
 
   color: white;
 
 }
+
 
 
 .ride-card h3 {
@@ -1232,9 +1518,11 @@ nav {
 }
 
 
+
 .ride-info {
 
   color:
+
     var(--text-secondary);
 
   font-size: 13px;
@@ -1242,6 +1530,7 @@ nav {
   line-height: 1.7;
 
 }
+
 
 
 .ride-actions {
@@ -1255,6 +1544,7 @@ nav {
 }
 
 
+
 .ride-actions button {
 
   flex: 1;
@@ -1262,11 +1552,13 @@ nav {
   min-height: 42px;
 
   border:
+
     1px solid var(--border);
 
   border-radius: 12px;
 
   background:
+
     #102830;
 
   color: white;
@@ -1278,24 +1570,31 @@ nav {
   cursor: pointer;
 
   transition:
+
     0.2s;
 
 }
 
 
+
 .ride-actions button:hover {
 
   border-color:
+
     var(--turquoise);
 
   color:
+
     var(--turquoise);
 
 }
 
 
+
 /* =========================================================
+
    ЧАТ
+
    ========================================================= */
 
 .chat-messages {
@@ -1309,16 +1608,19 @@ nav {
 }
 
 
+
 .chat-message {
 
   padding: 12px 14px;
 
   border:
+
     1px solid rgba(255, 255, 255, 0.07);
 
   border-radius: 14px;
 
   background:
+
     rgba(255, 255, 255, 0.035);
 
   font-size: 14px;
@@ -1328,11 +1630,13 @@ nav {
 }
 
 
+
 .chat-author {
 
   margin-bottom: 4px;
 
   color:
+
     var(--turquoise);
 
   font-weight: 700;
@@ -1340,16 +1644,19 @@ nav {
 }
 
 
+
 .chat-time {
 
   margin-top: 5px;
 
   color:
+
     var(--text-muted);
 
   font-size: 10px;
 
 }
+
 
 
 .chat-form {
@@ -1361,6 +1668,7 @@ nav {
 }
 
 
+
 .chat-form input {
 
   flex: 1;
@@ -1370,9 +1678,11 @@ nav {
   height: 46px;
 
   padding:
+
     0 14px;
 
   border:
+
     1px solid var(--border);
 
   border-radius: 13px;
@@ -1380,6 +1690,7 @@ nav {
   outline: none;
 
   background:
+
     #081920;
 
   color: white;
@@ -1387,17 +1698,21 @@ nav {
 }
 
 
+
 .chat-form input:focus {
 
   border-color:
+
     var(--turquoise);
 
 }
 
 
+
 .chat-form button {
 
   padding:
+
     0 18px;
 
   border: none;
@@ -1405,9 +1720,11 @@ nav {
   border-radius: 13px;
 
   background:
+
     var(--turquoise);
 
   color:
+
     #001719;
 
   font-weight: 700;
@@ -1417,13 +1734,17 @@ nav {
 }
 
 
+
 /* =========================================================
+
    ПРОФІЛЬ
+
    ========================================================= */
 
 .profile-about {
 
   color:
+
     var(--text-secondary);
 
   line-height: 1.5;
@@ -1433,8 +1754,11 @@ nav {
 }
 
 
+
 /* =========================================================
+
    МОДАЛЬНЕ ВІКНО
+
    ========================================================= */
 
 .modal {
@@ -1448,17 +1772,21 @@ nav {
   display: none;
 
   align-items: center;
+
   justify-content: center;
 
   padding: 20px;
 
   background:
+
     rgba(0, 0, 0, 0.72);
 
   backdrop-filter:
+
     blur(9px);
 
 }
+
 
 
 .modal-content {
@@ -1466,32 +1794,43 @@ nav {
   position: relative;
 
   width:
+
     min(480px, 100%);
 
   max-height:
+
     90vh;
 
   overflow-y: auto;
 
   padding:
+
     28px 24px;
 
   border:
+
     1px solid rgba(24, 217, 220, 0.20);
 
   border-radius: 25px;
 
   background:
+
     linear-gradient(
+
       145deg,
+
       #102830,
+
       #08191f
+
     );
 
   box-shadow:
+
     0 25px 80px rgba(0, 0, 0, 0.60);
 
 }
+
 
 
 .modal-header {
@@ -1509,9 +1848,11 @@ nav {
 }
 
 
+
 .modal-icon {
 
   width: 48px;
+
   height: 48px;
 
   flex-shrink: 0;
@@ -1519,19 +1860,23 @@ nav {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   border-radius: 14px;
 
   background:
+
     rgba(24, 217, 220, 0.12);
 
   border:
+
     1px solid rgba(24, 217, 220, 0.25);
 
   font-size: 25px;
 
 }
+
 
 
 .modal-header h2 {
@@ -1541,11 +1886,13 @@ nav {
 }
 
 
+
 .modal-header p {
 
   margin-top: 4px;
 
   color:
+
     var(--text-secondary);
 
   font-size: 11px;
@@ -1555,14 +1902,17 @@ nav {
 }
 
 
+
 .close {
 
   position: absolute;
 
   top: 12px;
+
   right: 16px;
 
   width: 38px;
+
   height: 38px;
 
   border: none;
@@ -1570,6 +1920,7 @@ nav {
   background: transparent;
 
   color:
+
     #91a4aa;
 
   font-size: 30px;
@@ -1579,6 +1930,7 @@ nav {
 }
 
 
+
 .close:hover {
 
   color: white;
@@ -1586,8 +1938,11 @@ nav {
 }
 
 
+
 /* =========================================================
+
    ПОЛЯ ФОРМИ
+
    ========================================================= */
 
 .modal-content label {
@@ -1595,9 +1950,11 @@ nav {
   display: block;
 
   margin-top: 14px;
+
   margin-bottom: 7px;
 
   color:
+
     #aebec3;
 
   font-size: 13px;
@@ -1607,12 +1964,15 @@ nav {
 }
 
 
+
 .modal-content input,
+
 .modal-content textarea {
 
   width: 100%;
 
   border:
+
     1px solid var(--border);
 
   border-radius: 12px;
@@ -1620,6 +1980,7 @@ nav {
   outline: none;
 
   background:
+
     #081920;
 
   color: white;
@@ -1631,14 +1992,17 @@ nav {
 }
 
 
+
 .modal-content input {
 
   height: 46px;
 
   padding:
+
     0 14px;
 
 }
+
 
 
 .modal-content textarea {
@@ -1646,6 +2010,7 @@ nav {
   min-height: 100px;
 
   padding:
+
     12px 14px;
 
   resize: vertical;
@@ -1653,20 +2018,27 @@ nav {
 }
 
 
+
 .modal-content input:focus,
+
 .modal-content textarea:focus {
 
   border-color:
+
     var(--turquoise);
 
   box-shadow:
+
     0 0 0 2px rgba(24, 217, 220, 0.10);
 
 }
 
 
+
 /* =========================================================
+
    ТОЧКА ЗБОРУ
+
    ========================================================= */
 
 .select-location {
@@ -1676,14 +2048,17 @@ nav {
   padding: 14px;
 
   border:
+
     1px solid rgba(24, 217, 220, 0.20);
 
   border-radius: 12px;
 
   background:
+
     rgba(24, 217, 220, 0.08);
 
   color:
+
     var(--turquoise);
 
   font-size: 13px;
@@ -1691,11 +2066,13 @@ nav {
 }
 
 
+
 .hint {
 
   margin-top: 10px;
 
   color:
+
     var(--text-muted);
 
   font-size: 12px;
@@ -1705,12 +2082,17 @@ nav {
 }
 
 
+
 /* =========================================================
+
    КНОПКИ
+
    ========================================================= */
 
 .secondary-btn,
+
 .create-btn,
+
 .cancel-btn {
 
   width: 100%;
@@ -1730,17 +2112,21 @@ nav {
   cursor: pointer;
 
   transition:
+
     0.2s;
 
 }
 
 
+
 .secondary-btn {
 
   border:
+
     1px solid var(--border);
 
   background:
+
     #102830;
 
   color: white;
@@ -1748,15 +2134,19 @@ nav {
 }
 
 
+
 .secondary-btn:hover {
 
   border-color:
+
     var(--turquoise);
 
   color:
+
     var(--turquoise);
 
 }
+
 
 
 .create-btn {
@@ -1764,23 +2154,29 @@ nav {
   border: none;
 
   background:
+
     var(--turquoise);
 
   color:
+
     #001719;
 
 }
 
 
+
 .create-btn:hover {
 
   background:
+
     var(--turquoise-light);
 
   transform:
+
     translateY(-1px);
 
 }
+
 
 
 .cancel-btn {
@@ -1788,12 +2184,15 @@ nav {
   border: none;
 
   background:
+
     transparent;
 
   color:
+
     #8fa1a7;
 
 }
+
 
 
 .cancel-btn:hover {
@@ -1803,16 +2202,21 @@ nav {
 }
 
 
+
 /* =========================================================
+
    СКРОЛБАРИ
+
    ========================================================= */
 
 ::-webkit-scrollbar {
 
   width: 5px;
+
   height: 5px;
 
 }
+
 
 
 ::-webkit-scrollbar-track {
@@ -1822,29 +2226,37 @@ nav {
 }
 
 
+
 ::-webkit-scrollbar-thumb {
 
   border-radius: 10px;
 
   background:
+
     rgba(24, 217, 220, 0.28);
 
 }
 
 
+
 ::-webkit-scrollbar-thumb:hover {
 
   background:
+
     rgba(24, 217, 220, 0.50);
 
 }
 
 
+
 /* =========================================================
+
    МОБІЛЬНА ВЕРСІЯ
+
    ========================================================= */
 
 @media (max-width: 600px) {
+
 
 
   .top-header {
@@ -1852,9 +2264,11 @@ nav {
     height: 82px;
 
     padding:
+
       10px 14px;
 
   }
+
 
 
   .brand {
@@ -1864,9 +2278,11 @@ nav {
   }
 
 
+
   .brand-icon {
 
     width: 44px;
+
     height: 44px;
 
     border-radius: 14px;
@@ -1876,11 +2292,13 @@ nav {
   }
 
 
+
   .logo {
 
     font-size: 20px;
 
   }
+
 
 
   .tagline {
@@ -1890,13 +2308,17 @@ nav {
   }
 
 
+
   .icon-btn,
+
   .avatar {
 
     width: 40px;
+
     height: 40px;
 
   }
+
 
 
   .search-box {
@@ -1904,6 +2326,7 @@ nav {
     top: 90px;
 
     left: 14px;
+
     right: 14px;
 
     height: 50px;
@@ -1911,14 +2334,17 @@ nav {
   }
 
 
+
   .map-filters {
 
     top: 150px;
 
     left: 14px;
+
     right: 14px;
 
   }
+
 
 
   .filter-chip {
@@ -1926,11 +2352,13 @@ nav {
     height: 39px;
 
     padding:
+
       0 13px;
 
     font-size: 13px;
 
   }
+
 
 
   .weather-card {
@@ -1942,6 +2370,7 @@ nav {
   }
 
 
+
   .map-controls {
 
     top: 202px;
@@ -1951,17 +2380,21 @@ nav {
   }
 
 
+
   .map-control {
 
     width: 44px;
+
     height: 44px;
 
   }
 
 
+
   .go-button {
 
     width: 96px;
+
     height: 96px;
 
     right: 14px;
@@ -1973,11 +2406,13 @@ nav {
   }
 
 
+
   .go-icon {
 
     font-size: 28px;
 
   }
+
 
 
   .place-card {
@@ -1987,6 +2422,7 @@ nav {
     bottom: 88px;
 
     width:
+
       calc(100% - 128px);
 
     min-height: 70px;
@@ -1996,14 +2432,17 @@ nav {
   }
 
 
+
   .place-image {
 
     width: 52px;
+
     height: 52px;
 
     border-radius: 12px;
 
   }
+
 
 
   .place-info {
@@ -2013,11 +2452,13 @@ nav {
   }
 
 
+
   .place-info strong {
 
     font-size: 14px;
 
   }
+
 
 
   .place-info span {
@@ -2027,6 +2468,7 @@ nav {
   }
 
 
+
   .place-info small {
 
     font-size: 9px;
@@ -2034,14 +2476,17 @@ nav {
   }
 
 
+
   .place-arrow {
 
     padding:
+
       0 5px;
 
     font-size: 26px;
 
   }
+
 
 
   nav {
@@ -2051,11 +2496,13 @@ nav {
   }
 
 
+
   .nav-item {
 
     height: 60px;
 
   }
+
 
 
   .nav-item span {
@@ -2065,6 +2512,7 @@ nav {
   }
 
 
+
   .nav-item small {
 
     font-size: 9px;
@@ -2072,17 +2520,21 @@ nav {
   }
 
 
+
   #rideList {
 
     left: 14px;
+
     right: 14px;
 
     top: 250px;
 
     max-height:
+
       calc(100vh - 330px);
 
   }
+
 
 
   .ride-card {
@@ -2094,6 +2546,7 @@ nav {
   }
 
 
+
   .ride-actions {
 
     flex-direction: column;
@@ -2101,12 +2554,15 @@ nav {
   }
 
 
+
   .section {
 
     padding:
+
       90px 14px 90px;
 
   }
+
 
 
   .modal {
@@ -2116,9 +2572,11 @@ nav {
   }
 
 
+
   .modal-content {
 
     padding:
+
       23px 18px;
 
     border-radius: 20px;
@@ -2126,14 +2584,19 @@ nav {
   }
 
 
+
 }
 
 
+
 /* =========================================================
+
    ДУЖЕ МАЛИЙ ЕКРАН
+
    ========================================================= */
 
 @media (max-width: 380px) {
+
 
 
   .brand-icon {
@@ -2143,11 +2606,13 @@ nav {
   }
 
 
+
   .logo {
 
     font-size: 18px;
 
   }
+
 
 
   .tagline {
@@ -2157,9 +2622,11 @@ nav {
   }
 
 
+
   .filter-chip {
 
     padding:
+
       0 11px;
 
     font-size: 12px;
@@ -2167,9 +2634,11 @@ nav {
   }
 
 
+
   .go-button {
 
     width: 88px;
+
     height: 88px;
 
     right: 12px;
@@ -2181,6 +2650,7 @@ nav {
   }
 
 
+
   .go-icon {
 
     font-size: 25px;
@@ -2188,32 +2658,41 @@ nav {
   }
 
 
+
   .place-card {
 
     width:
+
       calc(100% - 115px);
 
   }
 
 
+
 }
 
 
+
 /* =========================================================
+
    ВЕЛИКИЙ ЕКРАН
+
    ========================================================= */
 
 @media (min-width: 1000px) {
 
 
+
   .search-box {
 
     left: 24px;
+
     right: auto;
 
     width: 520px;
 
   }
+
 
 
   .map-filters {
@@ -2225,11 +2704,13 @@ nav {
   }
 
 
+
   .weather-card {
 
     left: 24px;
 
   }
+
 
 
   .map-controls {
@@ -2239,11 +2720,13 @@ nav {
   }
 
 
+
   .place-card {
 
     left: 24px;
 
   }
+
 
 
   .go-button {
@@ -2253,78 +2736,49 @@ nav {
   }
 
 
+
 }
+
 /* =========================================================
+
    НОВА КАРТКА ПОГОДИ
+
    ========================================================= */
 
-.weather-card {
-  position: absolute;
 
-  left: 50%;
-  bottom: 90px;
-
-  transform: translateX(-50%);
-
-  width: min(440px, calc(100% - 32px));
-
-  padding: 18px;
-
-  border-radius: 18px;
-
-  background: rgba(8, 25, 31, 0.92);
-
-  border: 1px solid rgba(0, 220, 210, 0.18);
-
-  box-shadow:
-    0 10px 35px rgba(0, 0, 0, 0.35);
-
-  backdrop-filter: blur(12px);
-
-  color: #ffffff;
-
-  z-index: 1200;
-
-  box-sizing: border-box;
-}
 
 
 /* Основна інформація */
 
 .weather-main {
+
   display: flex;
 
   align-items: center;
 
   gap: 14px;
+
 }
 
 
-.weather-icon {
-  width: 58px;
-  height: 58px;
 
-  display: flex;
 
-  align-items: center;
-  justify-content: center;
-
-  font-size: 42px;
-
-  flex-shrink: 0;
-}
 
 
 .weather-temperature {
+
   font-size: 34px;
 
   font-weight: 700;
 
   line-height: 1.1;
+
 }
 
 
+
 .weather-location {
+
   margin-top: 5px;
 
   font-size: 14px;
@@ -2336,55 +2790,71 @@ nav {
   overflow: hidden;
 
   text-overflow: ellipsis;
+
 }
+
 
 
 /* День / ніч */
 
 .weather-period {
+
   margin-top: 14px;
 
   font-size: 15px;
 
   font-weight: 700;
+
 }
 
 
+
 .weather-time {
+
   margin-top: 4px;
 
   font-size: 15px;
 
   color: rgba(255, 255, 255, 0.75);
+
 }
+
 
 
 /* Стан погоди */
 
 .weather-description {
+
   margin-top: 8px;
 
   font-size: 17px;
 
   font-weight: 600;
+
 }
+
 
 
 /* Деталі */
 
 .weather-details {
+
   display: grid;
 
   grid-template-columns:
+
     repeat(3, 1fr);
 
   gap: 8px;
 
   margin-top: 16px;
+
 }
 
 
+
 .weather-detail {
+
   display: flex;
 
   flex-direction: column;
@@ -2396,21 +2866,29 @@ nav {
   border-radius: 12px;
 
   background: rgba(255, 255, 255, 0.06);
+
 }
+
 
 
 .weather-detail span {
+
   font-size: 12px;
 
   color: rgba(255, 255, 255, 0.6);
+
 }
+
 
 
 .weather-detail strong {
+
   font-size: 14px;
 
   font-weight: 700;
+
 }
+
 
 
 /* Телефон */
@@ -2422,11 +2900,13 @@ nav {
     bottom: 82px;
 
     width:
+
       calc(100% - 24px);
 
     padding: 15px;
 
   }
+
 
 
   .weather-temperature {
@@ -2436,12 +2916,15 @@ nav {
   }
 
 
+
   .weather-details {
 
     grid-template-columns:
+
       repeat(3, 1fr);
 
   }
+
 
 
   .weather-detail {
@@ -2451,25 +2934,33 @@ nav {
   }
 
 }
+
 /* =========================================================
+
    КНОПКА ПОГОДИ
+
    ========================================================= */
 
 .weather-button {
+
   position: absolute;
 
-  top: 92px;
-  right: 18px;
+  top: 218px;
+
+  left: 20px;
 
   z-index: 1800;
 
   display: flex;
+
   align-items: center;
+
   gap: 7px;
 
   padding: 9px 13px;
 
   border: 1px solid rgba(0, 220, 210, 0.35);
+
   border-radius: 14px;
 
   background: rgba(8, 25, 31, 0.90);
@@ -2477,44 +2968,61 @@ nav {
   color: #ffffff;
 
   font-size: 15px;
+
   font-weight: 700;
 
   cursor: pointer;
 
   box-shadow:
+
     0 5px 18px rgba(0, 0, 0, 0.25);
 
   backdrop-filter: blur(10px);
 
   transition:
+
     transform 0.2s,
+
     background 0.2s,
+
     border-color 0.2s;
+
 }
 
 .weather-button:hover {
+
   transform: translateY(-1px);
 
   background: rgba(15, 35, 40, 0.96);
 
   border-color:
+
     rgba(0, 220, 210, 0.75);
+
 }
 
 .weather-button:active {
+
   transform: scale(0.96);
+
 }
 
 #weatherButtonIcon {
+
   font-size: 20px;
+
 }
 
 
+
 /* =========================================================
+
    ВІКНО ПОДРОБНОЇ ПОГОДИ
+
    ========================================================= */
 
 .weather-modal {
+
   position: fixed;
 
   inset: 0;
@@ -2524,20 +3032,25 @@ nav {
   display: none;
 
   align-items: center;
+
   justify-content: center;
 
   padding: 20px;
 
   background:
+
     rgba(0, 0, 0, 0.60);
 
   backdrop-filter: blur(5px);
 
   box-sizing: border-box;
+
 }
 
 
+
 .weather-modal-content {
+
   position: relative;
 
   width: min(520px, 100%);
@@ -2551,33 +3064,43 @@ nav {
   border-radius: 22px;
 
   background:
+
     rgba(8, 25, 31, 0.97);
 
   border:
+
     1px solid rgba(0, 220, 210, 0.25);
 
   color: #ffffff;
 
   box-shadow:
+
     0 20px 60px rgba(0, 0, 0, 0.50);
 
   box-sizing: border-box;
+
 }
 
 
+
 .weather-close {
+
   position: absolute;
 
   top: 12px;
+
   right: 14px;
 
   width: 38px;
+
   height: 38px;
 
   border: none;
+
   border-radius: 50%;
 
   background:
+
     rgba(255, 255, 255, 0.08);
 
   color: #ffffff;
@@ -2587,37 +3110,53 @@ nav {
   line-height: 1;
 
   cursor: pointer;
+
 }
+
 
 
 .weather-close:hover {
+
   background:
+
     rgba(255, 255, 255, 0.16);
+
 }
+
 
 
 .weather-modal-content h2 {
+
   margin: 0 45px 5px 0;
 
   font-size: 25px;
+
 }
+
 
 
 .weather-modal-location {
+
   margin-bottom: 20px;
 
   color:
+
     rgba(255, 255, 255, 0.65);
 
   font-size: 14px;
+
 }
 
 
+
 /* =========================================================
+
    ПОТОЧНА ПОГОДА
+
    ========================================================= */
 
 .weather-current {
+
   display: flex;
 
   align-items: center;
@@ -2629,43 +3168,59 @@ nav {
   border-radius: 17px;
 
   background:
+
     rgba(255, 255, 255, 0.06);
+
 }
+
 
 
 .weather-current-icon {
+
   font-size: 48px;
 
   line-height: 1;
+
 }
 
 
+
 .weather-current-temperature {
+
   font-size: 36px;
 
   font-weight: 700;
 
   line-height: 1;
+
 }
 
 
+
 /* =========================================================
+
    ДЕТАЛІ ПОТОЧНОЇ ПОГОДИ
+
    ========================================================= */
 
 .weather-current-details {
+
   display: grid;
 
   grid-template-columns:
+
     repeat(3, 1fr);
 
   gap: 8px;
 
   margin-top: 10px;
+
 }
 
 
+
 .weather-current-details > div {
+
   display: flex;
 
   flex-direction: column;
@@ -2677,38 +3232,55 @@ nav {
   border-radius: 13px;
 
   background:
+
     rgba(255, 255, 255, 0.05);
 
   font-size: 15px;
+
 }
+
 
 
 .weather-current-details span {
+
   color:
+
     rgba(255, 255, 255, 0.60);
 
   font-size: 12px;
+
 }
+
 
 
 .weather-current-details strong {
+
   font-size: 14px;
+
 }
+
 
 
 /* =========================================================
+
    ПРОГНОЗ
+
    ========================================================= */
 
 .weather-modal-content h3 {
+
   margin:
+
     22px 0 10px;
 
   font-size: 18px;
+
 }
 
 
+
 .weather-day {
+
   display: flex;
 
   gap: 8px;
@@ -2716,82 +3288,631 @@ nav {
   overflow-x: auto;
 
   padding-bottom: 5px;
+
 }
+
 
 
 .weather-forecast {
+
   display: grid;
 
   grid-template-columns:
+
     repeat(3, 1fr);
 
   gap: 8px;
+
 }
 
 
+
 .weather-forecast-card {
+
   padding: 13px;
 
   border-radius: 15px;
 
   background:
+
     rgba(255, 255, 255, 0.06);
 
   text-align: center;
+
 }
+
 
 
 .weather-forecast-card strong {
+
   display: block;
 
   margin:
+
     6px 0;
 
   font-size: 18px;
+
 }
+
 
 
 .weather-forecast-card small {
+
   color:
+
     rgba(255, 255, 255, 0.60);
+
 }
 
 
+
 /* =========================================================
+
    МОБІЛЬНА ВЕРСІЯ
+
    ========================================================= */
 
 @media (max-width: 600px) {
 
   .weather-button {
-    top: 82px;
-    right: 12px;
+
+    top: 198px;
+
+    right: 14px;
 
     padding: 8px 11px;
 
     font-size: 14px;
+
   }
 
   .weather-modal {
+
     padding: 10px;
+
   }
 
   .weather-modal-content {
+
     max-height: 94vh;
 
     padding: 18px;
 
     border-radius: 18px;
+
   }
 
   .weather-current-details {
+
     grid-template-columns:
+
       repeat(3, 1fr);
+
   }
 
   .weather-forecast {
+
     grid-template-columns:
+
       1fr;
+
+  }
+
+}
+
+/* =========================================================
+
+   ТОЧКА МОГО МІСЦЕЗНАХОДЖЕННЯ
+
+   ========================================================= */
+
+.my-location-marker {
+
+  background: transparent;
+
+  border: none;
+
+}
+
+.my-location-dot {
+
+  width: 20px;
+
+  height: 20px;
+
+  border-radius: 50%;
+
+  background:
+
+    var(--turquoise);
+
+  border:
+
+    4px solid rgba(255, 255, 255, 0.95);
+
+  box-shadow:
+
+    0 0 0 6px rgba(24, 217, 220, 0.22),
+
+    0 0 22px rgba(24, 217, 220, 0.75);
+
+  box-sizing: border-box;
+
+}
+
+/* =========================================================
+   ТОЧКА МОГО МІСЦЕЗНАХОДЖЕННЯ
+   ========================================================= */
+
+.my-location-marker {
+  background: transparent;
+  border: none;
+}
+
+.my-location-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--turquoise);
+  border: 4px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 0 0 6px rgba(24, 217, 220, 0.22),
+    0 0 22px rgba(24, 217, 220, 0.75);
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   ОНОВЛЕНИЙ СТИЛЬ ПОШУКУ
+   ========================================================= */
+
+.search-box {
+  background: rgba(8, 25, 31, 0.92);
+  border-color: rgba(24, 217, 220, 0.28);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.28),
+    0 0 18px rgba(24, 217, 220, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.search-box:focus-within {
+  border-color: rgba(24, 217, 220, 0.7);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(24, 217, 220, 0.18);
+}
+
+/* =========================================================
+   ОНОВЛЕНИЙ СТИЛЬ ФІЛЬТРІВ
+   ========================================================= */
+
+.map-filters {
+  padding: 0;
+}
+
+.filter-chip {
+  height: 42px;
+  padding: 0 15px;
+  border-color: rgba(24, 217, 220, 0.28);
+  border-radius: 14px;
+  background: rgba(8, 25, 31, 0.88);
+  font-weight: 600;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.22);
+}
+
+.filter-chip:hover {
+  border-color: rgba(24, 217, 220, 0.65);
+  transform: translateY(-1px);
+}
+
+.filter-chip.active {
+  background: var(--turquoise);
+  border-color: var(--turquoise);
+  color: #041417;
+  box-shadow: 0 0 16px rgba(24, 217, 220, 0.35);
+}
+/* =========================================================
+   НОВИЙ ДИЗАЙН ВЕРХНЬОЇ ЧАСТИНИ MOTO MAPS
+   ========================================================= */
+
+.top-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 220px;
+
+  padding: 28px 50px 0;
+
+  z-index: 2000;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(3, 18, 24, 0.98) 0%,
+      rgba(3, 18, 24, 0.94) 72%,
+      rgba(3, 18, 24, 0.00) 100%
+    );
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   БРЕНД
+   ========================================================= */
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 18px;
+
+  height: 82px;
+}
+
+
+.brand-icon {
+  width: 70px;
+  height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(24, 217, 220, 0.55);
+  border-radius: 50%;
+
+  background: rgba(5, 25, 31, 0.92);
+
+  box-shadow:
+    0 0 18px rgba(24, 217, 220, 0.16);
+}
+
+
+.brand-logo-mark {
+  font-size: 34px;
+  line-height: 1;
+}
+
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+}
+
+
+.logo {
+  font-size: 30px;
+  font-weight: 800;
+
+  line-height: 1.05;
+
+  letter-spacing: -0.5px;
+
+  color: #ffffff;
+}
+
+
+.tagline {
+  margin-top: 7px;
+
+  font-size: 14px;
+
+  color: rgba(255, 255, 255, 0.68);
+}
+
+
+/* =========================================================
+   ПОШУК
+   ========================================================= */
+
+.search-box {
+  position: absolute;
+
+  top: 112px;
+  left: 50px;
+  right: 50px;
+
+  height: 64px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 22px;
+
+  box-sizing: border-box;
+
+  border: 1px solid rgba(130, 190, 200, 0.22);
+  border-radius: 32px;
+
+  background:
+    rgba(13, 32, 39, 0.94);
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.25);
+
+  backdrop-filter: blur(14px);
+
+  z-index: 2100;
+}
+
+
+.search-box input {
+  width: 100%;
+
+  height: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #ffffff;
+
+  font-size: 18px;
+}
+
+
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+
+/* =========================================================
+   ФІЛЬТРИ
+   ========================================================= */
+
+.map-filters {
+  position: absolute;
+
+  top: 190px;
+  left: 44px;
+  right: 44px;
+
+  display: flex;
+
+  gap: 12px;
+
+  overflow-x: auto;
+
+  padding: 0 0 8px;
+
+  z-index: 2100;
+
+  scrollbar-width: none;
+}
+
+
+.map-filters::-webkit-scrollbar {
+  display: none;
+}
+
+
+.filter-chip {
+  flex: 0 0 auto;
+
+  min-height: 54px;
+
+  padding: 0 20px;
+
+  border: 1px solid rgba(130, 190, 200, 0.35);
+  border-radius: 28px;
+
+  background:
+    rgba(5, 25, 31, 0.90);
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(12px);
+
+  transition:
+    0.2s ease;
+}
+
+
+.filter-chip.active {
+  background:
+    #18d9dc;
+
+  border-color:
+    #18d9dc;
+
+  color:
+    #03171c;
+
+  box-shadow:
+    0 0 20px rgba(24, 217, 220, 0.28);
+}
+
+
+.filter-chip:active {
+  transform: scale(0.96);
+}
+
+
+/* =========================================================
+   МОБІЛЬНИЙ ЕКРАН
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .top-header {
+    height: 230px;
+
+    padding: 16px 16px 0;
+  }
+
+
+  .brand {
+    height: 62px;
+
+    gap: 12px;
+  }
+
+
+  .brand-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+
+  .brand-logo-mark {
+    font-size: 25px;
+  }
+
+
+  .logo {
+    font-size: 23px;
+  }
+
+
+  .tagline {
+    margin-top: 4px;
+
+    font-size: 10px;
+  }
+
+
+  .search-box {
+    top: 76px;
+    left: 16px;
+    right: 16px;
+
+    height: 56px;
+
+    padding: 0 18px;
+
+    border-radius: 28px;
+  }
+
+
+  .search-box input {
+    font-size: 15px;
+  }
+
+
+  .map-filters {
+    top: 145px;
+
+    left: 16px;
+    right: 16px;
+
+    gap: 8px;
+  }
+
+
+  .filter-chip {
+    min-height: 42px;
+
+    padding: 0 14px;
+
+    border-radius: 22px;
+
+    font-size: 13px;
+  }
+
+}
+/* =========================================================
+   ФІНАЛЬНЕ РОЗТАШУВАННЯ ВЕРХНЬОЇ ЧАСТИНИ
+   ========================================================= */
+
+.top-header {
+  height: 250px !important;
+}
+
+
+/* Пошук під логотипом */
+
+.search-box {
+  top: 105px !important;
+}
+
+
+/* Фільтри під пошуком */
+
+.map-filters {
+  top: 178px !important;
+}
+
+
+/* Погода нижче фільтрів */
+
+.weather-button {
+  top: 245px !important;
+}
+
+
+/* =========================================================
+   МОБІЛЬНИЙ ЕКРАН
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .top-header {
+    height: 235px !important;
+  }
+
+  .search-box {
+    top: 76px !important;
+  }
+
+  .map-filters {
+    top: 145px !important;
+  }
+
+  .weather-button {
+    top: 198px !important;
+  }
+
+}
+/* =========================================================
+   ПОВЕРТАЄМО ЛОГОТИП НАД ПОШУКОМ
+   ========================================================= */
+
+.top-header .brand {
+  position: absolute;
+  top: 18px;
+  left: 50px;
+
+  z-index: 2200;
+}
+
+
+/* Пошук нижче логотипа */
+
+.top-header .search-box {
+  position: absolute;
+  top: 105px;
+
+  z-index: 2100;
+}
+
+
+@media (max-width: 600px) {
+
+  .top-header .brand {
+    top: 8px;
+    left: 16px;
+  }
+
+  .top-header .search-box {
+    top: 76px;
   }
 
 }

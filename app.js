@@ -1,6 +1,5 @@
 // =========================================================
-// MOTO MAPS
-// ВИПРАВЛЕНА ОСНОВНА ЛОГІКА
+// MOTO MAPS — ОСНОВНА ЛОГІКА
 // =========================================================
 
 
@@ -11,16 +10,20 @@
 // Підключення до Supabase
 const SUPABASE_URL = 'https://mthbckypfurmebncdukj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_gfNOlLBzqvK-Sm9PfOzlWA_bDHq-MME';
+
 let supabaseClient = null;
 
 if (window.supabase) {
+
   supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY
   );
 
   console.log('Supabase підключено');
+
 } else {
+
   console.warn(
     'Бібліотеку Supabase не завантажено.'
   );
@@ -33,12 +36,12 @@ if (window.supabase) {
 
 const map =
   L.map('map').setView(
-    [48.3794, 31.1656],
-    6
+     [47.8388, 35.1396],
+    12
   );
 
 L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   {
     maxZoom: 19,
     attribution: 'Tiles &copy; Esri'
@@ -94,15 +97,42 @@ function findMe() {
 
       } else {
 
+        const myLocationIcon =
+          L.divIcon({
+
+            className:
+              'my-location-marker',
+
+            html:
+              '<div class="my-location-dot"></div>',
+
+            iconSize: [
+              32,
+              32
+            ],
+
+            iconAnchor: [
+              16,
+              16
+            ]
+
+          });
+
         myMarker =
-          L.marker([
-            lat,
-            lng
-          ])
-          .addTo(map)
-          .bindPopup(
-            '🏍️ Ви тут'
-          );
+          L.marker(
+            [
+              lat,
+              lng
+            ],
+            {
+              icon:
+                myLocationIcon
+            }
+          )
+            .addTo(map)
+            .bindPopup(
+              '🏍️ Ви тут'
+            );
 
         myMarker.openPopup();
       }
@@ -222,11 +252,11 @@ function chooseLocation() {
           meetingLocation.lat,
           meetingLocation.lng
         ])
-        .addTo(map)
-        .bindPopup(
-          '🏍️ Точка збору'
-        )
-        .openPopup();
+          .addTo(map)
+          .bindPopup(
+            '🏍️ Точка збору'
+          )
+          .openPopup();
 
       if (modal) {
 
@@ -483,7 +513,6 @@ function resetRideForm() {
       '📍 Точку збору ще не вибрано';
   }
 }
-
 // =========================================================
 // СПІЛЬНОТА
 // =========================================================
@@ -501,12 +530,15 @@ function showCommunity() {
     document.getElementById('profile');
 
   if (mapElement) {
-    mapElement.style.display = 'none';
+
+    mapElement.style.display =
+      'none';
   }
 
   if (profile) {
 
-    profile.style.display = 'block';
+    profile.style.display =
+      'block';
 
     profile.innerHTML = `
 
@@ -537,23 +569,23 @@ function showCommunity() {
 
   setActiveNavigation(1);
 }
+
+
 // =========================================================
 // СПИСОК МОТОПОЇЗДОК
 // =========================================================
 
 function showRides() {
+
   showBackButton();
+
   hideAllSections();
 
   const mapElement =
-    document.getElementById(
-      'map'
-    );
+    document.getElementById('map');
 
   const rideList =
-    document.getElementById(
-      'rideList'
-    );
+    document.getElementById('rideList');
 
   if (mapElement) {
 
@@ -726,42 +758,42 @@ function createAllRideMarkers() {
           ride.lat,
           ride.lng
         ])
-        .addTo(map)
-        .bindPopup(`
+          .addTo(map)
+          .bindPopup(`
 
-          <div>
+            <div>
 
-            🏍️ <b>
+              🏍️ <b>
+                ${escapeHtml(
+                  ride.name
+                )}
+              </b>
+
+              <br><br>
+
+              📅
               ${escapeHtml(
-                ride.name
+                ride.date
               )}
-            </b>
 
-            <br><br>
+              <br>
 
-            📅
-            ${escapeHtml(
-              ride.date
-            )}
+              🕐
+              ${escapeHtml(
+                ride.time
+              )}
 
-            <br>
+              <br>
 
-            🕐
-            ${escapeHtml(
-              ride.time
-            )}
+              👥 До
+              ${escapeHtml(
+                ride.people
+              )}
+              учасників
 
-            <br>
+            </div>
 
-            👥 До
-            ${escapeHtml(
-              ride.people
-            )}
-            учасників
-
-          </div>
-
-        `);
+          `);
 
       rideMarkers.push({
 
@@ -770,6 +802,7 @@ function createAllRideMarkers() {
 
         marker:
           marker
+
       });
     }
   );
@@ -843,20 +876,13 @@ function showMap() {
 
   hideAllSections();
 
+  hideBackButton();
+
   const mapElement =
-    document.getElementById(
-      'map'
-    );
+    document.getElementById('map');
 
   const rideList =
-    document.getElementById(
-      'rideList'
-    );
-
-  const homeRide =
-    document.getElementById(
-      'homeRide'
-    );
+    document.getElementById('rideList');
 
   if (mapElement) {
 
@@ -868,12 +894,6 @@ function showMap() {
 
     rideList.style.display =
       'none';
-  }
-
-  if (homeRide) {
-
-    homeRide.style.display =
-      'block';
   }
 
   setTimeout(
@@ -943,6 +963,8 @@ function saveChatMessages(
 function showChat() {
 
   hideAllSections();
+
+  showBackButton();
 
   const chat =
     document.getElementById(
@@ -1157,8 +1179,6 @@ function sendMessage(
 
   renderChat();
 }
-
-
 // =========================================================
 // ПРОФІЛЬ
 // =========================================================
@@ -1211,6 +1231,8 @@ function getProfile() {
 function showProfile() {
 
   hideAllSections();
+
+  showBackButton();
 
   const profile =
     document.getElementById(
@@ -1401,6 +1423,8 @@ function editProfile() {
 function showRegistration() {
 
   hideAllSections();
+
+  showBackButton();
 
   const profile =
     document.getElementById(
@@ -1795,11 +1819,6 @@ function joinRide(
 
 function hideAllSections() {
 
-  const homeRide =
-    document.getElementById(
-      'homeRide'
-    );
-
   const rideList =
     document.getElementById(
       'rideList'
@@ -1814,12 +1833,6 @@ function hideAllSections() {
     document.getElementById(
       'profile'
     );
-
-  if (homeRide) {
-
-    homeRide.style.display =
-      'none';
-  }
 
   if (rideList) {
 
@@ -1851,7 +1864,7 @@ function setActiveNavigation(
 
   const items =
     document.querySelectorAll(
-      'nav > div'
+      'nav > .nav-item'
     );
 
   items.forEach(
@@ -1915,12 +1928,10 @@ function escapeHtml(
     );
 }
 
+
 // =========================================================
 // КНОПКА «НАЗАД»
 // =========================================================
-
-let previousSection = 'map';
-
 
 function showBackButton() {
 
@@ -1965,7 +1976,9 @@ function goBack() {
 let weatherData = null;
 
 
-// Відкрити детальну погоду
+// =========================================================
+// ВІДКРИТТЯ ПОГОДИ
+// =========================================================
 
 function openWeather() {
 
@@ -1984,7 +1997,9 @@ function openWeather() {
 }
 
 
-// Закрити детальну погоду
+// =========================================================
+// ЗАКРИТТЯ ПОГОДИ
+// =========================================================
 
 function closeWeather() {
 
@@ -2001,8 +2016,9 @@ function closeWeather() {
 }
 
 
-// Закриття по натисканню
-// за межами вікна
+// =========================================================
+// ЗАКРИТТЯ ПОГОДИ ПРИ НАТИСКАННІ ПОЗА ВІКНОМ
+// =========================================================
 
 document.addEventListener(
   'click',
@@ -2030,8 +2046,9 @@ document.addEventListener(
 );
 
 
-// Визначення геолокації
-// та завантаження погоди
+// =========================================================
+// ВИЗНАЧЕННЯ ГЕОЛОКАЦІЇ ТА ЗАВАНТАЖЕННЯ ПОГОДИ
+// =========================================================
 
 function loadWeather() {
 
@@ -2044,7 +2061,6 @@ function loadWeather() {
     return;
   }
 
-
   navigator.geolocation.getCurrentPosition(
 
     function(position) {
@@ -2054,7 +2070,6 @@ function loadWeather() {
 
       const longitude =
         position.coords.longitude;
-
 
       getWeather(
         latitude,
@@ -2083,7 +2098,9 @@ function loadWeather() {
 }
 
 
-// Отримання погоди
+// =========================================================
+// ОТРИМАННЯ ПОГОДИ
+// =========================================================
 
 async function getWeather(
   latitude,
@@ -2147,26 +2164,29 @@ async function getWeather(
 
     weatherData =
       data;
-      
-    console.log(
-      '🌤️ Дані погоди отримано:',
-      data.current
-    );
+
 
     let locationName =
       'Ваше місцезнаходження';
 
+
+    // Визначення назви населеного пункту
     try {
 
       const locationResponse =
         await fetch(
           'https://api.bigdatacloud.net/data/reverse-geocode-client' +
           '?latitude=' +
-          encodeURIComponent(latitude) +
+          encodeURIComponent(
+            latitude
+          ) +
           '&longitude=' +
-          encodeURIComponent(longitude) +
+          encodeURIComponent(
+            longitude
+          ) +
           '&localityLanguage=uk'
         );
+
 
       if (
         locationResponse.ok
@@ -2174,6 +2194,7 @@ async function getWeather(
 
         const locationData =
           await locationResponse.json();
+
 
         locationName =
           locationData.city ||
@@ -2189,10 +2210,13 @@ async function getWeather(
         locationError
       );
     }
+
+
     updateWeatherInterface(
       data,
       locationName
     );
+
 
   } catch (error) {
 
@@ -2209,7 +2233,7 @@ async function getWeather(
 
 
 // =========================================================
-// ОНОВЛЕННЯ ІНТЕРФЕЙСУ
+// ОНОВЛЕННЯ ІНТЕРФЕЙСУ ПОГОДИ
 // =========================================================
 
 function updateWeatherInterface(
@@ -2548,14 +2572,11 @@ function renderTodayWeather(
   const hourly =
     data.hourly;
 
-
   const times =
     hourly.time;
 
-
   const now =
     new Date();
-
 
   let html =
     '';
@@ -2655,7 +2676,6 @@ function renderForecast(
   const daily =
     data.daily;
 
-
   let html =
     '';
 
@@ -2679,8 +2699,10 @@ function renderForecast(
         {
           weekday:
             'short',
+
           day:
             'numeric',
+
           month:
             'short'
         }
@@ -2769,6 +2791,8 @@ function showWeatherError(
       message;
   }
 }
+
+
 // =========================================================
 // ЗАПУСК ЗАСТОСУНКУ
 // =========================================================
@@ -2780,7 +2804,9 @@ window.addEventListener(
     console.log(
       '🏍️ Moto Maps запущено'
     );
+
     loadWeather();
+
     getRides();
 
     createAllRideMarkers();
