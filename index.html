@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <title>Moto Maps</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =====================================================
+       КАРТА
+       ===================================================== -->
+
+  <main id="map"></main>
+
+
+  <!-- =====================================================
+       ВЕРХНЯ ПАНЕЛЬ
+       ===================================================== -->
+
+  <header id="mapHeader" class="top-header">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+
+        <img
+          class="brand-logo-image"
+          src="./img/motomaps-logo.png"
+          alt="Moto Maps"
+          onerror="this.style.display='none'"
+        >
+
+        <span class="brand-fallback">🏍️</span>
+
+      </div>
+
+      <div class="brand-text">
+
+        <div class="logo">
+          Moto Maps
+        </div>
+
+        <div class="tagline">
+          Люди. Маршрути. Пригоди.
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="header-actions">
+    
+    <button
+      class="search-button"
+      type="button"
+    aria-label="Пошук"
+  >
+  <span
+    class="search-icon"
+    aria-hidden="true"
+  >
+    🔍
+  </span>
+      </button>
+
+      
+  <button
+  id="notificationsButton"
+  class="icon-btn notifications-button"
+  type="button"
+  title="Сповіщення"
+  aria-label="Сповіщення"
+  onclick="showRides()"
+>
+  🔔
+  <span
+    id="notificationsBadge"
+    class="notifications-badge"
+    hidden
+  >0</span>
+</button>
+
+      <button
+        id="headerAvatar"
+        class="avatar"
+        type="button"
+        onclick="showProfile()"
+        title="Профіль"
+        aria-label="Профіль"
+      >
+        🏍️
+      </button>
+
+    </div>
+
+  </header>
+
+
+ 
+  <!-- =====================================================
+       ФІЛЬТРИ КАРТИ
+       ===================================================== -->
+
+  <div id="mapFilters" class="map-filters">
+
+    <button
+      type="button"
+      class="map-filter active"
+      onclick="toggleMapFilter(this)"
+    >
+      🏍️ Мотоциклісти
+    </button>
+
+    <button
+      type="button"
+      class="map-filter active"
+      onclick="toggleMapFilter(this)"
+    >
+      🏍️ Мотопоїздки
+    </button>
+
+    <button
+      type="button"
+      class="map-filter"
+      onclick="toggleMapFilter(this)"
+    >
+      🔧 СТО
+    </button>
+
+    <button
+      type="button"
+      class="map-filter"
+      onclick="toggleMapFilter(this)"
+    >
+      📍 Цікаві місця
+    </button>
+
+  </div>
+
+
+  <!-- =====================================================
+       ПОГОДА
+       ===================================================== -->
+
+  <button
+    id="weatherButton"
+    class="weather-button"
+    type="button"
+    onclick="openWeather()"
+  >
+
+    <span id="weatherButtonIcon">
+      🌤️
+    </span>
+
+    <span id="weatherButtonTemperature">
+      --°C
+    </span>
+
+  </button>
+
+
+  <!-- =====================================================
+       КЕРУВАННЯ КАРТОЮ
+       ===================================================== -->
+
+  <div
+    id="mapControls"
+    class="map-controls"
+  >
+  <!-- =====================================================
+       КНОПКА СТВОРЕННЯ ПОЇЗДКИ
+       ===================================================== -->
+ 
+    <button
+      class="map-control location-control"
+      type="button"
+      onclick="findMe()"
+      title="Знайти мене"
+    >
+      ➤
+    </button>
+
+    <button
+      class="map-control"
+      type="button"
+      onclick="map.zoomIn()"
+      title="Збільшити"
+    >
+      +
+    </button>
+
+    <button
+      class="map-control"
+      type="button"
+      onclick="map.zoomOut()"
+      title="Зменшити"
+    >
+      −
+    </button>
+
+  </div>
+
+
+
+
+
+  <!-- =====================================================
+       ЕКРАНИ
+       ===================================================== -->
+
+  <section
+    id="rides"
+    class="app-screen"
+  ></section>
+
+
+  <section
+    id="chat"
+    class="app-screen"
+  ></section>
+
+
+  <section
+    id="profile"
+    class="app-screen"
+  ></section>
+
+
+  <section
+    id="settings"
+    class="app-screen"
+  ></section>
+
+
+  <!-- =====================================================
+       КНОПКА ЗАКРИТТЯ ЕКРАНУ
+       ===================================================== -->
+
+  <button
+    id="backButton"
+    class="back-button"
+    type="button"
+    onclick="goBack()"
+  >
+    ×
+  </button>
+
+
+  <!-- =====================================================
+       НИЖНЯ НАВІГАЦІЯ
+       ===================================================== -->
+
+  <nav
+    id="bottomNav"
+    class="bottom-nav"
+    aria-label="Основна навігація"
+  >
+   
+  <button
+      id="navRides"
+      type="button"
+      class="nav-item"
+      onclick="showRides()"
+    >
+      <span>+</span>
+      <small>Поїздки</small>
+    </button> 
+  
+  <!-- =====================================================
+       КНОПКА СТВОРЕННЯ ПОЇЗДКИ
+       ===================================================== -->
+<button
+      id="navRides"
+      type="button"
+      class="nav-item"
+      onclick="openModal()"
+    >
+      <span>+</span>
+      <small>Створити</small>
+    </button> 
+
+
+  </nav>
+
+</div>
+
+
+<!-- =====================================================
+     МОДАЛЬНЕ ВІКНО — СТВОРЕННЯ ПОЇЗДКИ
+     ===================================================== -->
+
+<div
+  id="modal"
+  class="modal"
+  role="dialog"
+  aria-modal="true"
+>
+
+  <div class="modal-content">
+
+    <button
+      class="close"
+      type="button"
+      onclick="closeModal()"
+      aria-label="Закрити"
+    >
+      ×
+    </button>
+
+
+    <div class="modal-header">
+
+      <div class="modal-icon">
+        🏍️
+      </div>
+
+      <div>
+
+        <h2>
+          Нова мотопоїздка
+        </h2>
+
+        <p>
+          Збери свою компанію та вирушайте разом.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <label for="rideName">
+      Назва мотопоїздки
+    </label>
+
+    <input
+      id="rideName"
+      type="text"
+      maxlength="100"
+      placeholder="Наприклад: Вечірня поїздка"
+      autocomplete="off"
+    >
+
+
+    <div class="form-row">
+
+      <div class="form-column">
+
+        <label for="rideDate">
+          Дата
+        </label>
+
+        <input
+          id="rideDate"
+          type="date"
+        >
+
+      </div>
+
+
+      <div class="form-column">
+
+        <label for="rideTime">
+          Час збору
+        </label>
+
+        <input
+          id="rideTime"
+          type="time"
+        >
+
+      </div>
+
+    </div>
+
+
+    <label for="ridePeople">
+      Кількість учасників
+    </label>
+
+    <input
+      id="ridePeople"
+      type="number"
+      min="1"
+      max="1000"
+      value="10"
+    >
+
+
+    <!-- =================================================
+         ПОШУК АДРЕСИ
+         ================================================= -->
+
+    <label for="rideAddress">
+      📍 Місце збору
+    </label>
+
+    <div class="address-search-row">
+
+      <input
+        id="rideAddress"
+        type="text"
+        placeholder="Введіть адресу або місце..."
+        autocomplete="off"
+      >
+
+      <button
+        type="button"
+        class="address-search-button"
+        onclick="searchMeetingAddress()"
+      >
+        🔎
+      </button>
+
+    </div>
+
+
+    <div
+      id="addressResults"
+      class="address-results"
+    ></div>
+
+
+    <div
+      id="locationStatus"
+      class="select-location"
+    >
+      📍 Точку збору ще не вибрано
+    </div>
+
+
+    <button
+      class="secondary-btn"
+      type="button"
+      onclick="chooseLocation()"
+    >
+      📍 Обрати точку на карті
+    </button>
+
+
+    <p class="hint">
+      Можна знайти місце за адресою або вибрати точку безпосередньо на карті.
+    </p>
+
+
+    <button
+      class="create-btn"
+      type="button"
+      onclick="saveRide()"
+    >
+      🏍️ ПОЇХАЛИ
+    </button>
+
+
+    <button
+      class="cancel-btn"
+      type="button"
+      onclick="closeModal()"
+    >
+      Скасувати
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     МОДАЛЬНЕ ВІКНО — МОТОЦИКЛІСТИ
+     ===================================================== -->
+
+<div
+  id="ridersModal"
+  class="modal"
+>
+
+  <div class="modal-content small-modal">
+
+    <button
+      class="close"
+      type="button"
+      onclick="closeRidersModal()"
+    >
+      ×
+    </button>
+
+    <div class="modal-header">
+
+      <div class="modal-icon">
+        🏍️
+      </div>
+
+      <div>
+
+        <h2>
+          Мотоциклісти
+        </h2>
+
+        <p id="ridersModalSubtitle">
+          Учасники поїздки
+        </p>
+
+      </div>
+
+    </div>
+
+    <div id="ridersList"></div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     ПОГОДА
+     ===================================================== -->
+
+<div
+  id="weatherModal"
+  class="weather-modal"
+>
+
+  <div class="weather-modal-content">
+
+    <button
+      class="weather-close"
+      type="button"
+      onclick="closeWeather()"
+    >
+      ×
+    </button>
+
+    <h2>
+      🌤️ Погода
+    </h2>
+
+    <div
+      id="weatherModalLocation"
+      class="weather-modal-location"
+    >
+      📍 Визначення місця...
+    </div>
+
+    <div class="weather-current">
+
+      <div
+        id="weatherCurrentIcon"
+        class="weather-current-icon"
+      >
+        🌤️
+      </div>
+
+      <div>
+
+        <div
+          id="weatherCurrentTemperature"
+          class="weather-current-temperature"
+        >
+          --°C
+        </div>
+
+        <div id="weatherCurrentDescription">
+          Визначення погоди...
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="weather-current-details">
+
+      <div>
+        💨
+        <span>Вітер</span>
+        <strong id="weatherCurrentWind">
+          -- м/с
+        </strong>
+      </div>
+
+      <div>
+        📊
+        <span>Тиск</span>
+        <strong id="weatherCurrentPressure">
+          -- гПа
+        </strong>
+      </div>
+
+      <div>
+        💧
+        <span>Вологість</span>
+        <strong id="weatherCurrentHumidity">
+          --%
+        </strong>
+      </div>
+
+    </div>
+
+
+    <h3>
+      Сьогодні
+    </h3>
+
+    <div
+      id="weatherToday"
+      class="weather-day"
+    >
+      Завантаження...
+    </div>
+
+
+    <h3>
+      Прогноз на 3 дні
+    </h3>
+
+    <div
+      id="weatherForecast"
+      class="weather-forecast"
+    >
+      Завантаження...
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     АВТОРИЗАЦІЯ
+     ===================================================== -->
+
+<div
+  id="authModal"
+  class="modal"
+>
+
+  <div class="modal-content">
+
+    <button
+      class="close"
+      type="button"
+      onclick="closeAuthModal()"
+    >
+      ×
+    </button>
+
+
+    <div class="modal-header">
+
+      <div class="modal-icon">
+        🏍️
+      </div>
+
+      <div>
+
+        <h2 id="authModalTitle">
+          Вхід у Moto Maps
+        </h2>
+
+        <p id="authModalDescription">
+          Увійди або створи обліковий запис.
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="auth-tabs">
+
+      <button
+        id="authLoginTab"
+        class="auth-tab active"
+        type="button"
+        onclick="showLoginForm()"
+      >
+        Увійти
+      </button>
+
+      <button
+        id="authRegisterTab"
+        class="auth-tab"
+        type="button"
+        onclick="showRegisterForm()"
+      >
+        Реєстрація
+      </button>
+
+    </div>
+
+
+    <label for="authEmail">
+      Email
+    </label>
+
+    <input
+      id="authEmail"
+      type="email"
+      placeholder="Введи свій email"
+      autocomplete="email"
+    >
+
+
+    <div id="authPhoneGroup">
+
+      <label for="authPhone">
+        Номер телефону
+      </label>
+
+      <input
+        id="authPhone"
+        type="tel"
+        placeholder="+38 099 999 99 99"
+        autocomplete="tel"
+        oninput="formatUkrainePhoneInput(this)"
+      >
+
+    </div>
+
+
+    <label for="authPassword">
+      Пароль
+    </label>
+
+    <input
+      id="authPassword"
+      type="password"
+      placeholder="Введи пароль"
+      autocomplete="current-password"
+    >
+
+
+    <div id="authPasswordConfirmGroup">
+
+      <label for="authPasswordConfirm">
+        Повторити пароль
+      </label>
+
+      <input
+        id="authPasswordConfirm"
+        type="password"
+        placeholder="Повтори пароль"
+        autocomplete="new-password"
+      >
+
+    </div>
+
+
+    <div
+      id="authMessage"
+      class="auth-message"
+      aria-live="polite"
+    ></div>
+
+
+    <button
+      id="authSubmitButton"
+      class="create-btn"
+      type="button"
+      onclick="loginUser()"
+    >
+      Увійти
+    </button>
+
+
+    <div class="auth-divider">
+      <span>або</span>
+    </div>
+
+
+    <button
+      id="googleAuthButton"
+      class="secondary-btn"
+      type="button"
+      onclick="loginWithGoogle()"
+    >
+      🌐 Продовжити з Google
+    </button>
+
+
+    <button
+      class="cancel-btn"
+      type="button"
+      onclick="closeAuthModal()"
+    >
+      Скасувати
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     LIBRARIES
+     ===================================================== -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
