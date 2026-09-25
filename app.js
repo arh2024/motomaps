@@ -452,6 +452,8 @@ function showMap() {
   showMapInterface();
 
   setActiveNav('map');
+  
+  loadRideMarkersFromSupabase();
 
   setTimeout(function() {
 
@@ -508,7 +510,12 @@ function showRides() {
     'block';
 
 
-  renderRides();
+ loadRidesFromSupabase()
+  .then(function(rides) {
+
+    renderRides(rides);
+
+  });
 
 }
 
@@ -611,7 +618,7 @@ function openModal() {
     );
 
 
-  if (date && !date.value) {
+  if (date) {
 
     const now =
       new Date();
@@ -633,7 +640,7 @@ function openModal() {
 
 
     date.min =
-      `${year}-${month}-${day}`;
+      `$${day}-${month}-{year}`;
 
   }
 
@@ -1082,6 +1089,58 @@ function getRides() {
 
 }
 
+
+async function loadRidesFromSupabase() {
+
+  if (!supabaseClient) {
+
+    return [];
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from('rides')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', {
+        ascending: false
+      });
+
+
+  if (error) {
+
+    console.error(
+      'Помилка завантаження мотопоїздок:',
+      error
+    );
+
+    return [];
+
+  }
+
+
+  return data || [];
+
+}
+
+
+function increaseUnreadRides() {
+
+  const count =
+    getUnreadRides() + 1;
+
+  localStorage.setItem(
+    'unreadRides',
+    count
+  );
+
+}
+
 function getUnreadRides() {
 
   return Number(
@@ -1104,7 +1163,6 @@ function increaseUnreadRides() {
   );
 
 }
-
 
 function updateNotificationsBadge() {
 
@@ -1136,7 +1194,7 @@ function saveRides(rides) {
 }
 
 
-function saveRide() {
+async function saveRide() {
 
   const name =
     document.getElementById(
@@ -1181,7 +1239,31 @@ function saveRide() {
 
     return;
 
-  }
+   }
+    const today = new Date();
+    const todayYear =
+     today.getFullYear();
+
+const todayMonth =
+  String(today.getMonth() + 1).padStart(2, '0');
+
+const todayDay =
+  String(today.getDate()).padStart(2, '0');
+
+const todayString =
+  `${todayYear}-${todayMonth}-${todayDay}`;
+
+
+if (date < todayString) {
+
+  alert(
+    'Не можна обрати дату в минулому.'
+  );
+
+  return;
+
+}
+ 
 
 
   if (!time) {
@@ -1206,36 +1288,132 @@ function saveRide() {
   }
 
 
-  const rides =
-    getRides();
+  if (!supabaseClient) {
+
+    alert(
+      'Supabase не підключено.'
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+
+    alert(
+      'Потрібно увійти в акаунт.'
+    );
+
+    return;
+
+  }
+
+
+  const user =
+    sessionData.session.user;
 
 
   const profile =
     getProfile();
 
 
+  const {
+    data: savedRide,
+    error
+  } =
+    await supabaseClient
+      .from('rides')
+      .insert({
+
+        creator_id:
+          user.id,
+
+        name:
+          name,
+
+        description:
+          null,
+
+        ride_date:
+          date,
+
+        ride_time:
+          time,
+
+        meeting_lat:
+          meetingLocation.lat,
+
+        meeting_lng:
+          meetingLocation.lng,
+
+        max_people:
+          Number(people) || 1,
+
+        status:
+          'open'
+
+      })
+      .select()
+      .single();
+
+
+  if (error) {
+
+    console.error(
+      'Помилка створення мотопоїздки:',
+      error
+    );
+
+    alert(
+      'Не вдалося створити мотопоїздку: ' +
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  const rides =
+    getRides();
+
+
   const ride = {
 
     id:
-      Date.now(),
+      savedRide.id,
 
-    name,
+    name:
+      savedRide.name,
 
-    date,
+    date:
+      savedRide.ride_date,
 
-    time,
+    time:
+      savedRide.ride_time,
 
     people:
-      Number(people) || 1,
+      savedRide.max_people,
 
     location:
       meetingLocation.label,
 
     lat:
-      meetingLocation.lat,
+      savedRide.meeting_lat,
 
     lng:
-      meetingLocation.lng,
+      savedRide.meeting_lng,
 
     creator:
       profile.nickname ||
@@ -1260,28 +1438,33 @@ function saveRide() {
   };
 
 
-rides.unshift(
-  ride
-);
+  rides.unshift(
+    ride
+  );
 
-saveRides(
-  rides
-);
-increaseUnreadRides();
-updateNotificationsBadge();
-closeModal();
 
-renderRideMarkers();
+  saveRides(
+    rides
+  );
 
-showMap();
 
-showSuccessMessage(
-  '🏍️ Мотопоїздку створено!'
-);
+  increaseUnreadRides();
+
+  updateNotificationsBadge();
+
+
+  closeModal();
+
+  renderRideMarkers();
+
+  showMap();
+
+
+  showSuccessMessage(
+    '🏍️ Мотопоїздку створено!'
+  );
 
 }
-
-
 // =========================================================
 // RIDE MARKERS
 // =========================================================
@@ -1304,6 +1487,77 @@ function clearRideMarkers() {
 
 }
 
+async function loadRideMarkersFromSupabase() {
+
+  if (!supabaseClient) {
+
+    return;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from('rides')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', {
+        ascending: false
+      });
+
+
+  if (error) {
+
+    console.error(
+      'Помилка завантаження точок мотопоїздок:',
+      error
+    );
+
+    return;
+
+  }
+
+
+  clearRideMarkers();
+
+
+  (data || []).forEach(function(ride) {
+
+    if (
+      typeof ride.meeting_lat !== 'number' ||
+      typeof ride.meeting_lng !== 'number'
+    ) {
+
+      return;
+
+    }
+
+
+    const marker =
+      L.marker(
+        [
+          ride.meeting_lat,
+          ride.meeting_lng
+        ]
+      )
+      .addTo(map)
+      .bindPopup(
+        `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
+        `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
+        `🕐 ${escapeHtml(ride.ride_time)}`
+      );
+
+
+    rideMarkers.push(
+      marker
+    );
+
+  });
+
+}
 
 function renderRideMarkers() {
 
@@ -1351,8 +1605,7 @@ function renderRideMarkers() {
 // =========================================================
 // RENDER RIDES
 // =========================================================
-
-function renderRides() {
+async function renderRides(ridesFromSupabase) {
 
   const container =
     document.getElementById(
@@ -1364,7 +1617,7 @@ function renderRides() {
 
 
   const rides =
-    getRides();
+    ridesFromSupabase || [];
 
 
   let html = `
