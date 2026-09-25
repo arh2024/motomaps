@@ -1754,12 +1754,60 @@ async function renderRides(ridesFromSupabase) {
       'rides'
     );
 
-
   if (!container) return;
-
 
   const rides =
     ridesFromSupabase || [];
+
+  let participantRows = [];
+
+  if (
+    supabaseClient &&
+    rides.length
+  ) {
+
+    const rideIds =
+      rides.map(function(ride) {
+        return ride.id;
+      });
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from('ride_participants')
+        .select(`
+          ride_id,
+          user_id,
+          profiles (
+            nickname
+          )
+        `)
+        .in(
+          'ride_id',
+          rideIds
+        )
+        .eq(
+          'status',
+          'joined'
+        );
+
+    if (error) {
+
+      console.error(
+        'Помилка завантаження учасників:',
+        error
+      );
+
+    } else {
+
+      participantRows =
+        data || [];
+
+    }
+
+  }
 
 
   let html = `
@@ -1780,14 +1828,14 @@ async function renderRides(ridesFromSupabase) {
 
         </div>
 
-      <button
-        class="rides-add-button"
-        type="button"
-        onclick="showMap()"
-         aria-label="Закрити"
-                    >
-         ×
-      </button>
+        <button
+          class="rides-add-button"
+          type="button"
+          onclick="showMap()"
+          aria-label="Закрити"
+        >
+          ×
+        </button>
 
       </div>
 
@@ -1795,10 +1843,13 @@ async function renderRides(ridesFromSupabase) {
 
         <div class="ride-counter">
           ${rides.length}
-          ${rides.length === 1 ? 'поїздка' : 'поїздок'}
+          ${rides.length === 1
+            ? 'поїздка'
+            : 'поїздок'}
         </div>
 
       </div>
+
   `;
 
 
@@ -1836,10 +1887,65 @@ async function renderRides(ridesFromSupabase) {
 
     rides.forEach(function(ride) {
 
+      const participants =
+        participantRows.filter(
+          function(item) {
+            return item.ride_id === ride.id;
+          }
+        );
+
+
       const ridersCount =
-        Array.isArray(ride.riders)
-          ? ride.riders.length
-          : 1;
+        participants.length;
+
+
+      const riderNames =
+        participants
+          .map(function(item) {
+
+            return (
+              item.profiles &&
+              item.profiles.nickname
+            )
+              ? item.profiles.nickname
+              : 'Moto Rider';
+
+          });
+
+
+      let participantsHtml = '';
+
+      if (riderNames.length) {
+
+        participantsHtml = `
+
+          <div class="ride-participants">
+
+            <div class="ride-participants-title">
+              👥 Учасники:
+            </div>
+
+            <div class="ride-participants-list">
+
+              ${riderNames
+                .map(function(name) {
+
+                  return `
+                    <span class="ride-participant-name">
+                      ${escapeHtml(name)}
+                    </span>
+                  `;
+
+                })
+                .join('')}
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
 
 
       html += `
@@ -1853,51 +1959,70 @@ async function renderRides(ridesFromSupabase) {
           <div class="ride-meta">
 
             <div>
-              📅 ${escapeHtml(formatDate(ride.date))}
+              📅
+              ${escapeHtml(
+                formatDate(
+                  ride.ride_date
+                )
+              )}
             </div>
 
             <div>
-              🕐 ${escapeHtml(ride.time)}
+              🕐
+              ${escapeHtml(
+                ride.ride_time
+              )}
             </div>
 
             <div>
-              👥 до ${escapeHtml(ride.people)}
+              👥 до
+              ${escapeHtml(
+                ride.max_people
+              )}
             </div>
 
             <div>
-              🏍️ ${ridersCount} учасн.
+              🏍️
+              ${ridersCount}
+              учасн.
             </div>
 
           </div>
 
           <div class="ride-location">
 
-            📍 ${escapeHtml(ride.location)}
+            📍
+            ${escapeHtml(
+              ride.location ||
+              'Точку збору не вказано'
+            )}
 
           </div>
+
+          ${participantsHtml}
 
           <div class="ride-actions">
 
             <button
               class="ride-action"
               type="button"
-              onclick="showRideRiders(${ride.id})"
+              onclick="showRideRiders('${ride.id}')"
             >
               👥 Мотоциклісти
             </button>
 
-          <button
-            class="ride-action"
-            type="button"
-            onclick="joinRide('${ride.id}')"
-          >
-           🏍️ Приєднатися
-          </button>
+            <button
+              class="ride-action"
+              type="button"
+              onclick="joinRide('${ride.id}')"
+            >
+              🏍️ Приєднатися
+            </button>
 
             <button
               class="ride-action"
               type="button"
-              onclick="openRideOnMap(${ride.id})"
+              onclick="openRideOnMap('${ride.id}')"
             >
               📍 На карті
             </button>
@@ -1917,13 +2042,10 @@ async function renderRides(ridesFromSupabase) {
       </div>
   `;
 
-
   container.innerHTML =
     html;
 
 }
-
-
 // =========================================================
 // RIDE HELPERS
 // =========================================================
