@@ -2607,10 +2607,9 @@ async function renderProfile() {
 // PROFILE DETAILS
 // =========================================================
 
-async function showProfileDetails() {
-
 async function editProfileField(field) {
 
+  // Поки дозволяємо редагувати тільки ці поля
   if (
     field !== 'bike' &&
     field !== 'city' &&
@@ -2628,8 +2627,7 @@ async function editProfileField(field) {
   const {
     data: sessionData,
     error: sessionError
-  } =
-    await supabaseClient.auth.getSession();
+  } = await supabaseClient.auth.getSession();
 
   if (
     sessionError ||
@@ -2639,20 +2637,16 @@ async function editProfileField(field) {
     return;
   }
 
-  const user =
-    sessionData.session.user;
+  const user = sessionData.session.user;
 
   const {
     data: profileData,
     error: profileError
-  } =
-    await supabaseClient
-      .from('profiles')
-      .select(
-        'bike, city, about'
-      )
-      .eq('id', user.id)
-      .single();
+  } = await supabaseClient
+    .from('profiles')
+    .select('bike, city, about')
+    .eq('id', user.id)
+    .single();
 
   if (profileError) {
     console.error(
@@ -2660,10 +2654,7 @@ async function editProfileField(field) {
       profileError
     );
 
-    alert(
-      'Не вдалося завантажити дані профілю.'
-    );
-
+    alert('Не вдалося завантажити дані профілю.');
     return;
   }
 
@@ -2676,31 +2667,27 @@ async function editProfileField(field) {
   const currentValue =
     profileData[field] || '';
 
-  const newValue =
-    prompt(
-      fieldNames[field] + ':',
-      currentValue
-    );
+  const newValue = prompt(
+    fieldNames[field] + ':',
+    currentValue
+  );
 
   if (newValue === null) {
     return;
   }
 
-  const value =
-    newValue.trim();
+  const value = newValue.trim();
 
   const {
     error: updateError
-  } =
-    await supabaseClient
-      .from('profiles')
-      .update({
-        [field]: value || null
-      })
-      .eq('id', user.id);
+  } = await supabaseClient
+    .from('profiles')
+    .update({
+      [field]: value || null
+    })
+    .eq('id', user.id);
 
   if (updateError) {
-
     console.error(
       'Помилка збереження профілю:',
       updateError
@@ -2717,10 +2704,15 @@ async function editProfileField(field) {
   await showProfileDetails();
 }
 
+
+async function showProfileDetails() {
+
   const element =
     document.getElementById('profile');
 
-  if (!element) return;
+  if (!element) {
+    return;
+  }
 
   if (!supabaseClient) {
     openAuthModal();
@@ -2730,8 +2722,7 @@ async function editProfileField(field) {
   const {
     data: sessionData,
     error: sessionError
-  } =
-    await supabaseClient.auth.getSession();
+  } = await supabaseClient.auth.getSession();
 
   if (
     sessionError ||
@@ -2747,18 +2738,17 @@ async function editProfileField(field) {
   const {
     data: profileData,
     error: profileError
-  } =
-    await supabaseClient
-      .from('profiles')
-      .select(`
-        nickname,
-        bike,
-        phone,
-        city,
-        about
-      `)
-      .eq('id', user.id)
-      .single();
+  } = await supabaseClient
+    .from('profiles')
+    .select(`
+      nickname,
+      bike,
+      phone,
+      city,
+      about
+    `)
+    .eq('id', user.id)
+    .single();
 
   if (profileError) {
 
@@ -2767,12 +2757,16 @@ async function editProfileField(field) {
       profileError
     );
 
+    alert(
+      'Не вдалося завантажити профіль: ' +
+      profileError.message
+    );
+
     return;
   }
 
   const email =
-    user.email ||
-    'Не вказано';
+    user.email || 'Не вказано';
 
   element.innerHTML = `
 
@@ -2781,7 +2775,6 @@ async function editProfileField(field) {
       <div class="profile-header">
 
         <div>
-
           <span class="screen-eyebrow">
             MOTO MAPS
           </span>
@@ -2789,7 +2782,6 @@ async function editProfileField(field) {
           <h1>
             Профіль
           </h1>
-
         </div>
 
         <button
@@ -2805,7 +2797,6 @@ async function editProfileField(field) {
 
 
       <div class="profile-details">
-
 
         <button
           class="profile-detail-row"
@@ -3002,15 +2993,12 @@ async function editProfileField(field) {
 
         </button>
 
-
       </div>
 
     </div>
 
   `;
 }
-
-
 // =========================================================
 // AVATAR
 // =========================================================
