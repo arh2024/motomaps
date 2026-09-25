@@ -1997,6 +1997,58 @@ function openRideOnMap(id) {
 // =========================================================
 // RIDERS
 // =========================================================
+async function loadRideParticipantCounts(rideIds) {
+
+  if (!supabaseClient || !rideIds.length) {
+
+    return {};
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from('ride_participants')
+      .select('ride_id')
+      .in('ride_id', rideIds)
+      .eq('status', 'joined');
+
+
+  if (error) {
+
+    console.error(
+      'Помилка завантаження учасників:',
+      error
+    );
+
+    return {};
+
+  }
+
+
+  const counts = {};
+
+
+  (data || []).forEach(function(item) {
+
+    if (!counts[item.ride_id]) {
+
+      counts[item.ride_id] = 0;
+
+    }
+
+
+    counts[item.ride_id]++;
+
+  });
+
+
+  return counts;
+
+}
 
 function showRideRiders(id) {
 
