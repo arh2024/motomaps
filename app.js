@@ -1258,14 +1258,39 @@ function increaseUnreadRides() {
 
 }
 
-function getUnreadRides() {
+async function getUnreadRides() {
 
-  return Number(
-    localStorage.getItem(
-      'unreadRides'
-    )
-  ) || 0;
+  if (!supabaseClient) return 0;
 
+  const {
+    data: sessionData,
+    error: sessionError
+  } = await supabaseClient.auth.getSession();
+
+  if (sessionError || !sessionData.session) {
+    return 0;
+  }
+
+  const user = sessionData.session.user;
+
+  const {
+    count,
+    error
+  } = await supabaseClient
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('is_read', false);
+
+  if (error) {
+    console.error(
+      'Помилка завантаження сповіщень:',
+      error
+    );
+    return 0;
+  }
+
+  return count || 0;
 }
 
 
@@ -1281,7 +1306,7 @@ function increaseUnreadRides() {
 
 }
 
-function updateNotificationsBadge() {
+async function updateNotificationsBadge() {
 
   const badge =
     document.getElementById(
@@ -1291,7 +1316,7 @@ function updateNotificationsBadge() {
   if (!badge) return;
 
   const count =
-    getUnreadRides();
+    await getUnreadRides();
 
   badge.textContent =
     count;
@@ -3755,7 +3780,7 @@ document.addEventListener(
 
 
     showMap();
-
+    updateNotificationsBadge();
 
     // Закриття модальних вікон
     // по кліку на затемнення.
