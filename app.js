@@ -1704,11 +1704,12 @@ async function loadRideMarkersFromSupabase() {
         ]
       )
       .addTo(map)
-      .bindPopup(
-        `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
-        `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
-        `🕐 ${escapeHtml(ride.ride_time)}`
-      );
+.bindPopup(
+  `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
+  `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
+  `🕐 ${escapeHtml(ride.ride_time)}<br><br>` +
+  `<button type="button" onclick="joinRide('${ride.id}')">ПОЇХАТИ</button>`
+);
 
 
     rideMarkers.push(
