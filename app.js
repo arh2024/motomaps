@@ -2316,188 +2316,132 @@ function closeRidersModal() {
 // PROFILE
 // =========================================================
 
-function getProfile() {
-
-  const defaultProfile = {
-
-    nickname:
-      'Moto Rider',
-
-    bike:
-      'Поки не вказано',
-
-    city:
-      'Поки не вказано',
-
-    about:
-      'Не заповнено',
-
-    avatar:
-      ''
-
-  };
-
-
-  const saved =
-    localStorage.getItem(
-      'motoProfile'
-    );
-
-
-  if (!saved) {
-
-    return defaultProfile;
-
-  }
-
-
-  try {
-
-    return {
-
-      ...defaultProfile,
-
-      ...JSON.parse(saved)
-
-    };
-
-  } catch (error) {
-
-    return defaultProfile;
-
-  }
-
-}
-
-
-function saveProfile(profile) {
-
-  localStorage.setItem(
-    'motoProfile',
-    JSON.stringify(profile)
-  );
-
-
-  updateHeaderAvatar();
-
-}
-
-
-function updateHeaderAvatar() {
-
-  const button =
-    document.getElementById(
-      'headerAvatar'
-    );
-
-
-  if (!button) return;
-
-
-  const profile =
-    getProfile();
-
-
-  if (profile.avatar) {
-
-    button.innerHTML =
-      `<img src="${profile.avatar}" alt="Аватар">`;
-
-  } else {
-
-    button.textContent =
-      '🏍️';
-
-  }
-
-}
-
-
-function showProfile() {
+async function showProfile() {
 
   if (!supabaseClient) {
-
     openAuthModal();
-
     return;
-
   }
 
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
 
-  supabaseClient.auth
-    .getSession()
-    .then(function(result) {
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+    openAuthModal();
+    return;
+  }
 
-      const session =
-        result.data.session;
+  profileReturnScreen =
+    currentScreen === 'settings'
+      ? 'profile'
+      : 'map';
 
+  currentScreen =
+    'profile';
 
-      if (!session) {
+  hideAllScreens();
+  hideMapInterface();
 
-        openAuthModal();
+  hideCloseButton();
 
-        return;
+  const profile =
+    document.getElementById('profile');
 
-      }
+  if (!profile) return;
 
+  profile.style.display =
+    'block';
 
-      profileReturnScreen =
-        currentScreen === 'settings'
-          ? 'profile'
-          : 'map';
-
-
-      currentScreen =
-        'profile';
-
-
-      hideAllScreens();
-
-      hideMapInterface();
-
-      showCloseButton();
-
-
-      const profile =
-        document.getElementById(
-          'profile'
-        );
-
-
-      if (!profile) return;
-
-
-      profile.style.display =
-        'block';
-
-
-      renderProfile();
-
-    });
+  await renderProfile();
 
 }
 
-function renderProfile() {
+
+// =========================================================
+// RENDER PROFILE
+// =========================================================
+
+async function renderProfile() {
 
   const element =
-    document.getElementById(
-      'profile'
-    );
+    document.getElementById('profile');
 
   if (!element) return;
 
-  const profile =
-    getProfile();
+  if (!supabaseClient) {
+    openAuthModal();
+    return;
+  }
+
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+    openAuthModal();
+    return;
+  }
+
+  const user =
+    sessionData.session.user;
+
+  const {
+    data: profileData,
+    error: profileError
+  } =
+    await supabaseClient
+      .from('profiles')
+      .select(`
+        id,
+        nickname,
+        avatar_url,
+        city,
+        about,
+        phone,
+        bike
+      `)
+      .eq('id', user.id)
+      .single();
+
+  if (profileError) {
+
+    console.error(
+      'Помилка завантаження профілю:',
+      profileError
+    );
+
+    alert(
+      'Не вдалося завантажити профіль: ' +
+      profileError.message
+    );
+
+    return;
+  }
 
   const nickname =
-    profile.nickname ||
+    profileData.nickname ||
     'Moto Rider';
+
+  const avatar =
+    profileData.avatar_url ||
+    '';
 
   element.innerHTML = `
 
-    <div class="screen-card profile-screen-card">
+    <div class="profile-fullscreen">
 
-      <div class="screen-title-row">
+      <div class="profile-header">
 
         <div>
 
@@ -2505,392 +2449,485 @@ function renderProfile() {
             MOTO MAPS
           </span>
 
-          <h2>
-            Вітаю, ${escapeHtml(nickname)}!
-          </h2>
+          <h1>
+            Вітаю,
+            ${escapeHtml(nickname)}!
+          </h1>
 
         </div>
-
-      </div>
-
-
-      <div class="profile-avatar-large">
-
-        ${
-          profile.avatar
-            ? `<img
-                src="${profile.avatar}"
-                alt="Аватар"
-              >`
-            : '🏍️'
-        }
-
-      </div>
-
-
-      <label class="avatar-upload">
-
-        📷 Змінити аватар
-
-        <input
-          id="avatarInput"
-          type="file"
-          accept="image/*"
-          onchange="handleAvatarUpload(event)"
-        >
-
-      </label>
-
-
-      <div class="profile-info">
-
-
-        <div class="profile-info-row">
-
-          <div class="profile-field">
-
-            <span>
-              👤 Нікнейм
-            </span>
-
-            <strong>
-              ${escapeHtml(nickname)}
-            </strong>
-
-          </div>
-
-          <button
-            class="profile-edit-button"
-            type="button"
-            onclick="editProfileField('nickname')"
-            aria-label="Редагувати нікнейм"
-          >
-            ✏️
-          </button>
-
-        </div>
-
-
-        <div class="profile-info-row">
-
-          <div class="profile-field">
-
-            <span>
-              ✉️ Email
-            </span>
-
-            <strong
-              id="profileEmail"
-            >
-              Завантаження...
-            </strong>
-
-          </div>
-
-          <button
-            class="profile-edit-button"
-            type="button"
-            onclick="editProfileField('email')"
-            aria-label="Редагувати email"
-          >
-            ✏️
-          </button>
-
-        </div>
-
-
-        <div class="profile-info-row">
-
-          <div class="profile-field">
-
-            <span>
-              📱 Телефон
-            </span>
-
-            <strong
-              id="profilePhone"
-            >
-              Завантаження...
-            </strong>
-
-          </div>
-
-          <button
-            class="profile-edit-button"
-            type="button"
-            onclick="editProfileField('phone')"
-            aria-label="Редагувати телефон"
-          >
-            ✏️
-          </button>
-
-        </div>
-
-
-        <div class="profile-info-row">
-
-          <div class="profile-field">
-
-            <span>
-              🏍️ Мотоцикл
-            </span>
-
-            <strong>
-              ${escapeHtml(profile.bike)}
-            </strong>
-
-          </div>
-
-          <button
-            class="profile-edit-button"
-            type="button"
-            onclick="editProfileField('bike')"
-            aria-label="Редагувати мотоцикл"
-          >
-            ✏️
-          </button>
-
-        </div>
-
-
-        <div class="profile-info-row">
-
-          <div class="profile-field">
-
-            <span>
-              🏙️ Місто
-            </span>
-
-            <strong>
-              ${escapeHtml(profile.city)}
-            </strong>
-
-          </div>
-
-          <button
-            class="profile-edit-button"
-            type="button"
-            onclick="editProfileField('city')"
-            aria-label="Редагувати місто"
-          >
-            ✏️
-          </button>
-
-        </div>
-
-
-        <div class="profile-info-row">
-
-          <div class="profile-field">
-
-            <span>
-              📝 Про себе
-            </span>
-
-            <strong>
-              ${escapeHtml(profile.about)}
-            </strong>
-
-          </div>
-
-          <button
-            class="profile-edit-button"
-            type="button"
-            onclick="editProfileField('about')"
-            aria-label="Редагувати інформацію"
-          >
-            ✏️
-          </button>
-
-        </div>
-
-
-      </div>
-
-
-      <div class="profile-buttons">
 
         <button
-          class="secondary-btn"
+          class="profile-close-button"
           type="button"
-          onclick="showSettings()"
+          onclick="showMap()"
+          aria-label="Закрити"
         >
-          ⚙️ Налаштування
+          ×
+        </button>
+
+      </div>
+
+
+      <div class="profile-main">
+
+
+        <button
+          class="profile-avatar-button"
+          type="button"
+          onclick="changeProfileAvatar()"
+          aria-label="Змінити аватар"
+        >
+
+          <div class="profile-avatar-large">
+
+            ${
+              avatar
+                ? `
+                  <img
+                    src="${escapeHtml(avatar)}"
+                    alt="Аватар"
+                  >
+                `
+                : '🏍️'
+            }
+
+          </div>
+
         </button>
 
 
+        <div class="profile-menu">
+
+
+          <button
+            class="profile-menu-item"
+            type="button"
+            onclick="showProfileDetails()"
+          >
+
+            <span class="profile-menu-icon">
+              👤
+            </span>
+
+            <span class="profile-menu-text">
+              Профіль
+            </span>
+
+            <span class="profile-menu-arrow">
+              ›
+            </span>
+
+          </button>
+
+
+          <button
+            class="profile-menu-item"
+            type="button"
+            onclick="showRides()"
+          >
+
+            <span class="profile-menu-icon">
+              🏍️
+            </span>
+
+            <span class="profile-menu-text">
+              Мої мотопоїздки
+            </span>
+
+            <span class="profile-menu-arrow">
+              ›
+            </span>
+
+          </button>
+
+
+          <button
+            class="profile-menu-item"
+            type="button"
+            onclick="showSecurity()"
+          >
+
+            <span class="profile-menu-icon">
+              🔒
+            </span>
+
+            <span class="profile-menu-text">
+              Безпека
+            </span>
+
+            <span class="profile-menu-arrow">
+              ›
+            </span>
+
+          </button>
+
+
+          <button
+            class="profile-menu-item"
+            type="button"
+            onclick="showSettings()"
+          >
+
+            <span class="profile-menu-icon">
+              ⚙️
+            </span>
+
+            <span class="profile-menu-text">
+              Налаштування
+            </span>
+
+            <span class="profile-menu-arrow">
+              ›
+            </span>
+
+          </button>
+
+
+        </div>
+
+
         <button
-          class="cancel-btn"
+          class="profile-logout-button"
           type="button"
           onclick="logoutUser()"
         >
           Вийти з акаунта
         </button>
 
+
       </div>
 
     </div>
 
   `;
-
-
-  loadProfileContactData();
-
 }
 
-function handleAvatarUpload(event) {
 
-  const file =
-    event.target.files[0];
+// =========================================================
+// PROFILE DETAILS
+// =========================================================
 
+async function showProfileDetails() {
 
-  if (!file) return;
+  const element =
+    document.getElementById('profile');
 
+  if (!element) return;
 
-  if (!file.type.startsWith('image/')) {
+  if (!supabaseClient) {
+    openAuthModal();
+    return;
+  }
 
-    alert(
-      'Оберіть зображення.'
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+    openAuthModal();
+    return;
+  }
+
+  const user =
+    sessionData.session.user;
+
+  const {
+    data: profileData,
+    error: profileError
+  } =
+    await supabaseClient
+      .from('profiles')
+      .select(`
+        nickname,
+        bike,
+        phone,
+        city,
+        about
+      `)
+      .eq('id', user.id)
+      .single();
+
+  if (profileError) {
+
+    console.error(
+      'Помилка завантаження даних профілю:',
+      profileError
     );
 
     return;
-
   }
 
+  const email =
+    user.email ||
+    'Не вказано';
 
-  if (file.size > 5 * 1024 * 1024) {
+  element.innerHTML = `
 
-    alert(
-      'Фото має бути не більше 5 МБ.'
-    );
+    <div class="profile-fullscreen">
 
-    return;
+      <div class="profile-header">
 
-  }
+        <div>
 
+          <span class="screen-eyebrow">
+            MOTO MAPS
+          </span>
 
-  const reader =
-    new FileReader();
+          <h1>
+            Профіль
+          </h1>
 
+        </div>
 
-  reader.onload =
-    function(e) {
+        <button
+          class="profile-close-button"
+          type="button"
+          onclick="showProfile()"
+          aria-label="Назад"
+        >
+          ×
+        </button>
 
-      const image =
-        new Image();
-
-
-      image.onload =
-        function() {
-
-          const canvas =
-            document.createElement(
-              'canvas'
-            );
-
-
-          const maxSize =
-            512;
+      </div>
 
 
-          let width =
-            image.width;
-
-          let height =
-            image.height;
+      <div class="profile-details">
 
 
-          if (width > height) {
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="nickname"
+          onclick="editProfileField('nickname')"
+        >
 
-            if (width > maxSize) {
+          <span class="profile-detail-icon">
+            👤
+          </span>
 
-              height =
-                height *
-                maxSize /
-                width;
+          <span class="profile-detail-content">
 
-              width =
-                maxSize;
+            <strong>
+              Нікнейм
+            </strong>
 
-            }
+            <small>
+              ${escapeHtml(
+                profileData.nickname ||
+                'Moto Rider'
+              )}
+            </small>
 
-          } else {
+          </span>
 
-            if (height > maxSize) {
+          <span class="profile-menu-arrow">
+            ›
+          </span>
 
-              width =
-                width *
-                maxSize /
-                height;
-
-              height =
-                maxSize;
-
-            }
-
-          }
-
-
-          canvas.width =
-            width;
-
-          canvas.height =
-            height;
+        </button>
 
 
-          const ctx =
-            canvas.getContext(
-              '2d'
-            );
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="bike"
+          onclick="editProfileField('bike')"
+        >
+
+          <span class="profile-detail-icon">
+            🏍️
+          </span>
+
+          <span class="profile-detail-content">
+
+            <strong>
+              Мотоцикл
+            </strong>
+
+            <small>
+              ${escapeHtml(
+                profileData.bike ||
+                'Поки не вказано'
+              )}
+            </small>
+
+          </span>
+
+          <span class="profile-menu-arrow">
+            ›
+          </span>
+
+        </button>
 
 
-          ctx.drawImage(
-            image,
-            0,
-            0,
-            width,
-            height
-          );
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="phone"
+          onclick="editProfileField('phone')"
+        >
+
+          <span class="profile-detail-icon">
+            📱
+          </span>
+
+          <span class="profile-detail-content">
+
+            <strong>
+              Телефон
+            </strong>
+
+            <small>
+              ${escapeHtml(
+                profileData.phone ||
+                user.phone ||
+                'Не вказано'
+              )}
+            </small>
+
+          </span>
+
+          <span class="profile-menu-arrow">
+            ›
+          </span>
+
+        </button>
 
 
-          const avatar =
-            canvas.toDataURL(
-              'image/jpeg',
-              .82
-            );
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="city"
+          onclick="editProfileField('city')"
+        >
+
+          <span class="profile-detail-icon">
+            🏙️
+          </span>
+
+          <span class="profile-detail-content">
+
+            <strong>
+              Місто
+            </strong>
+
+            <small>
+              ${escapeHtml(
+                profileData.city ||
+                'Не вказано'
+              )}
+            </small>
+
+          </span>
+
+          <span class="profile-menu-arrow">
+            ›
+          </span>
+
+        </button>
 
 
-          const profile =
-            getProfile();
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="about"
+          onclick="editProfileField('about')"
+        >
+
+          <span class="profile-detail-icon">
+            📝
+          </span>
+
+          <span class="profile-detail-content">
+
+            <strong>
+              Про себе
+            </strong>
+
+            <small>
+              ${escapeHtml(
+                profileData.about ||
+                'Не заповнено'
+              )}
+            </small>
+
+          </span>
+
+          <span class="profile-menu-arrow">
+            ›
+          </span>
+
+        </button>
 
 
-          profile.avatar =
-            avatar;
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="email"
+          onclick="editProfileField('email')"
+        >
+
+          <span class="profile-detail-icon">
+            ✉️
+          </span>
+
+          <span class="profile-detail-content">
+
+            <strong>
+              Email
+            </strong>
+
+            <small>
+              ${escapeHtml(email)}
+            </small>
+
+          </span>
+
+          <span class="profile-menu-arrow">
+            ›
+          </span>
+
+        </button>
 
 
-          saveProfile(
-            profile
-          );
+      </div>
+
+    </div>
+
+  `;
+}
 
 
-          renderProfile();
+// =========================================================
+// AVATAR
+// =========================================================
 
-        };
+function changeProfileAvatar() {
 
+  const input =
+    document.createElement('input');
 
-      image.src =
-        e.target.result;
+  input.type =
+    'file';
+
+  input.accept =
+    'image/*';
+
+  input.onchange =
+    function(event) {
+
+      handleAvatarUpload(event);
 
     };
 
-
-  reader.readAsDataURL(
-    file
-  );
+  input.click();
 
 }
-
-
 // =========================================================
 // EDIT PROFILE
 // =========================================================
@@ -2990,7 +3027,7 @@ function showSettings() {
 
   hideMapInterface();
 
-  showCloseButton();
+  hideCloseButton();
 
 
   const settings =
