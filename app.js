@@ -452,7 +452,7 @@ function showMap() {
   showMapInterface();
 
   setActiveNav('map');
-  
+
   loadRideMarkersFromSupabase();
 
   setTimeout(function() {
@@ -518,7 +518,124 @@ function showRides() {
   });
 
 }
+async function joinRide(rideId) {
 
+  if (!supabaseClient) {
+
+    alert(
+      'Supabase не підключено.'
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+
+    alert(
+      'Потрібно увійти в акаунт.'
+    );
+
+    return;
+
+  }
+
+
+  const user =
+    sessionData.session.user;
+
+
+  const {
+    data: existingParticipant,
+    error: checkError
+  } =
+    await supabaseClient
+      .from('ride_participants')
+      .select('id')
+      .eq('ride_id', rideId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+
+  if (checkError) {
+
+    console.error(
+      'Помилка перевірки участі:',
+      checkError
+    );
+
+    alert(
+      'Не вдалося перевірити участь.'
+    );
+
+    return;
+
+  }
+
+
+  if (existingParticipant) {
+
+    alert(
+      'Ви вже приєдналися до цієї мотопоїздки.'
+    );
+
+    return;
+
+  }
+
+
+  const {
+    error: insertError
+  } =
+    await supabaseClient
+      .from('ride_participants')
+      .insert({
+
+        ride_id:
+          rideId,
+
+        user_id:
+          user.id,
+
+        status:
+          'joined'
+
+      });
+
+
+  if (insertError) {
+
+    console.error(
+      'Помилка приєднання до мотопоїздки:',
+      insertError
+    );
+
+    alert(
+      'Не вдалося приєднатися до мотопоїздки: ' +
+      insertError.message
+    );
+
+    return;
+
+  }
+
+
+  alert(
+    '🏍️ Ви приєдналися до мотопоїздки!'
+  );
+
+}
 
 function goBack() {
 
@@ -1743,6 +1860,14 @@ async function renderRides(ridesFromSupabase) {
             >
               👥 Мотоциклісти
             </button>
+
+          <button
+            class="ride-action"
+            type="button"
+            onclick="joinRide('${ride.id}')"
+          >
+           🏍️ Приєднатися
+          </button>
 
             <button
               class="ride-action"
