@@ -1462,12 +1462,30 @@ if (date < todayString) {
   }
 
 
-  const user =
-    sessionData.session.user;
+const user = sessionData.session.user;
 
+const {
+  data: profileData,
+  error: profileError
+} = await supabaseClient
+  .from('profiles')
+  .select('nickname, bike')
+  .eq('id', user.id)
+  .single();
 
-  const profile =
-    getProfile();
+if (profileError) {
+  console.error(
+    'Помилка завантаження профілю:',
+    profileError
+  );
+
+  alert(
+    'Не вдалося завантажити профіль: ' +
+    profileError.message
+  );
+
+  return;
+}
 
 
   const {
@@ -1760,6 +1778,7 @@ async function renderRides(ridesFromSupabase) {
     ridesFromSupabase || [];
 
   let participantRows = [];
+  let creatorProfiles = {};
 
   if (
     supabaseClient &&
@@ -1771,19 +1790,20 @@ async function renderRides(ridesFromSupabase) {
         return ride.id;
       });
 
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from('ride_participants')
-        .select(`
-          ride_id,
-          user_id,
-          profiles (
-            nickname
-          )
-        `)
+const {
+  data,
+  error
+} =
+  await supabaseClient
+    .from('ride_participants')
+    .select(`
+      ride_id,
+      user_id,
+      profiles (
+        nickname,
+        bike
+      )
+    `)
         .in(
           'ride_id',
           rideIds
@@ -1804,6 +1824,49 @@ async function renderRides(ridesFromSupabase) {
 
       participantRows =
         data || [];
+
+        const creatorIds = [
+  ...new Set(
+    rides
+      .map(function(ride) {
+        return ride.creator_id;
+      })
+      .filter(Boolean)
+  )
+];
+
+if (creatorIds.length) {
+
+  const {
+    data: creatorData,
+    error: creatorError
+  } = await supabaseClient
+    .from('profiles')
+    .select(`
+      id,
+      nickname,
+      bike
+    `)
+    .in('id', creatorIds);
+
+  if (creatorError) {
+
+    console.error(
+      'Помилка завантаження профілів авторів:',
+      creatorError
+    );
+
+  } else {
+
+    (creatorData || []).forEach(function(profile) {
+
+      creatorProfiles[profile.id] =
+        profile;
+
+    });
+
+  }
+}
 
     }
 
@@ -1955,7 +2018,27 @@ async function renderRides(ridesFromSupabase) {
           <h3>
             🏍️ ${escapeHtml(ride.name)}
           </h3>
+${creatorProfiles[ride.creator_id] ? `
+  <div class="ride-creator">
+    👤 Створив:
+    <strong>
+      ${escapeHtml(
+        creatorProfiles[ride.creator_id].nickname ||
+        'Moto Rider'
+      )}
+    </strong>
+  </div>
 
+  <div class="ride-bike">
+    🏍️ Мотоцикл:
+    <strong>
+      ${escapeHtml(
+        creatorProfiles[ride.creator_id].bike ||
+        'Не вказано'
+      )}
+    </strong>
+  </div>
+` : ''}
           <div class="ride-meta">
 
             <div>
@@ -4229,7 +4312,7 @@ document.addEventListener(
     );
 
 
-    updateHeaderAvatar();
+   // updateHeaderAvatar(); 
 
 
     renderRideMarkers();
@@ -4352,7 +4435,7 @@ document.addEventListener(
             currentScreen === 'map'
           ) {
 
-            updateHeaderAvatar();
+            // updateHeaderAvatar();
 
           }
 
