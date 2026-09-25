@@ -2609,6 +2609,114 @@ async function renderProfile() {
 
 async function showProfileDetails() {
 
+async function editProfileField(field) {
+
+  if (
+    field !== 'bike' &&
+    field !== 'city' &&
+    field !== 'about'
+  ) {
+    alert('Для цього поля ще потрібно додати підтвердження.');
+    return;
+  }
+
+  if (!supabaseClient) {
+    alert('Supabase не підключено.');
+    return;
+  }
+
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+    alert('Потрібно увійти в акаунт.');
+    return;
+  }
+
+  const user =
+    sessionData.session.user;
+
+  const {
+    data: profileData,
+    error: profileError
+  } =
+    await supabaseClient
+      .from('profiles')
+      .select(
+        'bike, city, about'
+      )
+      .eq('id', user.id)
+      .single();
+
+  if (profileError) {
+    console.error(
+      'Помилка завантаження профілю:',
+      profileError
+    );
+
+    alert(
+      'Не вдалося завантажити дані профілю.'
+    );
+
+    return;
+  }
+
+  const fieldNames = {
+    bike: 'Мотоцикл',
+    city: 'Місто',
+    about: 'Про себе'
+  };
+
+  const currentValue =
+    profileData[field] || '';
+
+  const newValue =
+    prompt(
+      fieldNames[field] + ':',
+      currentValue
+    );
+
+  if (newValue === null) {
+    return;
+  }
+
+  const value =
+    newValue.trim();
+
+  const {
+    error: updateError
+  } =
+    await supabaseClient
+      .from('profiles')
+      .update({
+        [field]: value || null
+      })
+      .eq('id', user.id);
+
+  if (updateError) {
+
+    console.error(
+      'Помилка збереження профілю:',
+      updateError
+    );
+
+    alert(
+      'Не вдалося зберегти зміни: ' +
+      updateError.message
+    );
+
+    return;
+  }
+
+  await showProfileDetails();
+}
+
   const element =
     document.getElementById('profile');
 
@@ -2907,28 +3015,123 @@ async function showProfileDetails() {
 // AVATAR
 // =========================================================
 
-function changeProfileAvatar() {
+async function changeProfileAvatar() {
 
-  const input =
-    document.createElement('input');
+  const input = document.createElement('input');
 
-  input.type =
-    'file';
+  input.type = 'file';
+  input.accept = 'image/*';
 
-  input.accept =
-    'image/*';
+  input.onchange = async function(event) {
 
-  input.onchange =
-    function(event) {
+    const file = event.target.files[0];
 
-      handleAvatarUpload(event);
+    if (!file) return;
 
-    };
+    await handleAvatarUpload(file);
+  };
 
   input.click();
-
 }
-// =========================================================
+
+
+async function handleAvatarUpload(file) {
+
+  if (!supabaseClient) {
+    alert('Supabase не підключено.');
+    return;
+  }
+
+  const {
+    data: sessionData,
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
+
+  if (
+    sessionError ||
+    !sessionData.session
+  ) {
+    alert('Потрібно увійти в акаунт.');
+    return;
+  }
+
+  const user =
+    sessionData.session.user;
+
+  const fileExt =
+    file.name.split('.').pop().toLowerCase();
+
+  const filePath =
+    `${user.id}/avatar.${fileExt}`;
+
+  const {
+    error: uploadError
+  } =
+    await supabaseClient
+      .storage
+      .from('avatars')
+      .upload(
+        filePath,
+        file,
+        {
+          upsert: true,
+          contentType: file.type
+        }
+      );
+
+  if (uploadError) {
+
+    console.error(
+      'Помилка завантаження аватара:',
+      uploadError
+    );
+
+    alert(
+      'Не вдалося завантажити фото: ' +
+      uploadError.message
+    );
+
+    return;
+  }
+
+  const {
+    data: publicUrlData
+  } =
+    supabaseClient
+      .storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+  const avatarUrl =
+    publicUrlData.publicUrl;
+
+  const {
+    error: updateError
+  } =
+    await supabaseClient
+      .from('profiles')
+      .update({
+        avatar_url: avatarUrl
+      })
+      .eq('id', user.id);
+
+  if (updateError) {
+
+    console.error(
+      'Помилка збереження avatar_url:',
+      updateError
+    );
+
+    alert(
+      'Фото завантажено, але не вдалося зберегти його в профілі.'
+    );
+
+    return;
+  }
+
+  await renderProfile();
+}// =========================================================
 // EDIT PROFILE
 // =========================================================
 
