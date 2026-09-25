@@ -2477,7 +2477,6 @@ function showProfile() {
 
 }
 
-
 function renderProfile() {
 
   const element =
@@ -2485,13 +2484,14 @@ function renderProfile() {
       'profile'
     );
 
-
   if (!element) return;
-
 
   const profile =
     getProfile();
 
+  const nickname =
+    profile.nickname ||
+    'Moto Rider';
 
   element.innerHTML = `
 
@@ -2506,7 +2506,7 @@ function renderProfile() {
           </span>
 
           <h2>
-            👤 Мій профіль
+            Вітаю, ${escapeHtml(nickname)}!
           </h2>
 
         </div>
@@ -2518,7 +2518,10 @@ function renderProfile() {
 
         ${
           profile.avatar
-            ? `<img src="${profile.avatar}" alt="Аватар">`
+            ? `<img
+                src="${profile.avatar}"
+                alt="Аватар"
+              >`
             : '🏍️'
         }
 
@@ -2541,70 +2544,171 @@ function renderProfile() {
 
       <div class="profile-info">
 
+
         <div class="profile-info-row">
 
-          <span>
-            Нікнейм
-          </span>
+          <div class="profile-field">
 
-          <strong>
-            ${escapeHtml(profile.nickname)}
-          </strong>
+            <span>
+              👤 Нікнейм
+            </span>
+
+            <strong>
+              ${escapeHtml(nickname)}
+            </strong>
+
+          </div>
+
+          <button
+            class="profile-edit-button"
+            type="button"
+            onclick="editProfileField('nickname')"
+            aria-label="Редагувати нікнейм"
+          >
+            ✏️
+          </button>
 
         </div>
 
 
         <div class="profile-info-row">
 
-          <span>
-            Мотоцикл
-          </span>
+          <div class="profile-field">
 
-          <strong>
-            ${escapeHtml(profile.bike)}
-          </strong>
+            <span>
+              ✉️ Email
+            </span>
+
+            <strong
+              id="profileEmail"
+            >
+              Завантаження...
+            </strong>
+
+          </div>
+
+          <button
+            class="profile-edit-button"
+            type="button"
+            onclick="editProfileField('email')"
+            aria-label="Редагувати email"
+          >
+            ✏️
+          </button>
 
         </div>
 
 
         <div class="profile-info-row">
 
-          <span>
-            Місто
-          </span>
+          <div class="profile-field">
 
-          <strong>
-            ${escapeHtml(profile.city)}
-          </strong>
+            <span>
+              📱 Телефон
+            </span>
+
+            <strong
+              id="profilePhone"
+            >
+              Завантаження...
+            </strong>
+
+          </div>
+
+          <button
+            class="profile-edit-button"
+            type="button"
+            onclick="editProfileField('phone')"
+            aria-label="Редагувати телефон"
+          >
+            ✏️
+          </button>
 
         </div>
 
 
         <div class="profile-info-row">
 
-          <span>
-            Про себе
-          </span>
+          <div class="profile-field">
 
-          <strong>
-            ${escapeHtml(profile.about)}
-          </strong>
+            <span>
+              🏍️ Мотоцикл
+            </span>
+
+            <strong>
+              ${escapeHtml(profile.bike)}
+            </strong>
+
+          </div>
+
+          <button
+            class="profile-edit-button"
+            type="button"
+            onclick="editProfileField('bike')"
+            aria-label="Редагувати мотоцикл"
+          >
+            ✏️
+          </button>
 
         </div>
+
+
+        <div class="profile-info-row">
+
+          <div class="profile-field">
+
+            <span>
+              🏙️ Місто
+            </span>
+
+            <strong>
+              ${escapeHtml(profile.city)}
+            </strong>
+
+          </div>
+
+          <button
+            class="profile-edit-button"
+            type="button"
+            onclick="editProfileField('city')"
+            aria-label="Редагувати місто"
+          >
+            ✏️
+          </button>
+
+        </div>
+
+
+        <div class="profile-info-row">
+
+          <div class="profile-field">
+
+            <span>
+              📝 Про себе
+            </span>
+
+            <strong>
+              ${escapeHtml(profile.about)}
+            </strong>
+
+          </div>
+
+          <button
+            class="profile-edit-button"
+            type="button"
+            onclick="editProfileField('about')"
+            aria-label="Редагувати інформацію"
+          >
+            ✏️
+          </button>
+
+        </div>
+
 
       </div>
 
 
       <div class="profile-buttons">
-
-        <button
-          class="secondary-btn"
-          type="button"
-          onclick="editProfile()"
-        >
-          ✏️ Редагувати профіль
-        </button>
-
 
         <button
           class="secondary-btn"
@@ -2629,8 +2733,10 @@ function renderProfile() {
 
   `;
 
-}
 
+  loadProfileContactData();
+
+}
 
 function handleAvatarUpload(event) {
 
