@@ -1584,11 +1584,11 @@ if (profileError) {
       {
 
         name:
-          profile.nickname ||
+          profileData.nickname||
           'Moto Rider',
 
         bike:
-          profile.bike ||
+          profileData.bike||
           'Мотоцикл не вказано'
 
       }
