@@ -1626,200 +1626,142 @@ if (profileError) {
 
 }
 // =========================================================
-// RIDE MARKERS FROM SUPABASE
+// RIDE MARKERS
 // =========================================================
+
+function clearRideMarkers() {
+
+  rideMarkers.forEach(
+    function(marker) {
+
+      map.removeLayer(
+        marker
+      );
+
+    }
+  );
+
+
+  rideMarkers =
+    [];
+
+}
 
 async function loadRideMarkersFromSupabase() {
 
   if (!supabaseClient) {
+
     return;
+
   }
 
-  const {
-    data: rides,
-    error: ridesError
-  } = await supabaseClient
-    .from('rides')
-    .select('*')
-    .eq('status', 'open')
-    .order('created_at', {
-      ascending: false
-    });
 
-  if (ridesError) {
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from('rides')
+      .select('*')
+      .eq('status', 'open')
+      .order('created_at', {
+        ascending: false
+      });
+
+
+  if (error) {
 
     console.error(
-      'Помилка завантаження мотопоїздок:',
-      ridesError
+      'Помилка завантаження точок мотопоїздок:',
+      error
     );
 
     return;
+
   }
+
 
   clearRideMarkers();
 
-  const rideList =
-    rides || [];
 
-  if (!rideList.length) {
-    return;
-  }
+  (data || []).forEach(function(ride) {
 
+    if (
+      typeof ride.meeting_lat !== 'number' ||
+      typeof ride.meeting_lng !== 'number'
+    ) {
 
-  // -------------------------------------------------------
-  // Завантажуємо профілі авторів
-  // -------------------------------------------------------
-
-  const creatorIds = [
-    ...new Set(
-      rideList
-        .map(function(ride) {
-          return ride.creator_id;
-        })
-        .filter(Boolean)
-    )
-  ];
-
-  let creatorProfiles = {};
-
-  if (creatorIds.length) {
-
-    const {
-      data: profiles,
-      error: profilesError
-    } = await supabaseClient
-      .from('profiles')
-      .select(`
-        id,
-        nickname,
-        bike
-      `)
-      .in('id', creatorIds);
-
-    if (profilesError) {
-
-      console.error(
-        'Помилка завантаження профілів авторів:',
-        profilesError
-      );
-
-    } else {
-
-      (profiles || []).forEach(
-        function(profile) {
-
-          creatorProfiles[profile.id] =
-            profile;
-
-        }
-      );
+      return;
 
     }
-  }
 
 
-  // -------------------------------------------------------
-  // Створюємо точки на карті
-  // -------------------------------------------------------
-
-  rideList.forEach(
-    function(ride) {
-
-      if (
-        typeof ride.meeting_lat !== 'number' ||
-        typeof ride.meeting_lng !== 'number'
-      ) {
-        return;
-      }
-
-      const creator =
-        creatorProfiles[ride.creator_id] || {};
-
-      const creatorName =
-        creator.nickname ||
-        'Moto Rider';
-
-      const creatorBike =
-        creator.bike ||
-        'Не вказано';
-
-
-      const popupHtml = `
-
-        <div class="ride-map-popup">
-
-          <div class="ride-map-popup-title">
-            🏍️ ${escapeHtml(
-              ride.name || 'Мотопоїздка'
-            )}
-          </div>
-
-          <div class="ride-map-popup-info">
-
-            <div>
-              👤 <strong>Створив:</strong>
-              ${escapeHtml(creatorName)}
-            </div>
-
-            <div>
-              🏍️ <strong>Мотоцикл:</strong>
-              ${escapeHtml(creatorBike)}
-            </div>
-
-            <div>
-              📅 <strong>Дата:</strong>
-              ${escapeHtml(
-                formatDate(ride.ride_date)
-              )}
-            </div>
-
-            <div>
-              🕐 <strong>Час:</strong>
-              ${escapeHtml(
-                ride.ride_time || 'Не вказано'
-              )}
-            </div>
-
-            <div>
-              👥 <strong>Місць:</strong>
-              ${escapeHtml(
-                ride.max_people || 'Не вказано'
-              )}
-            </div>
-
-          </div>
-
-          <button
-            type="button"
-            class="ride-map-join-button"
-            onclick="joinRide('${ride.id}')"
-          >
-            🏍️ ПРИЄДНАТИСЯ ДО ПОЇЗДКИ
-          </button>
-
-        </div>
-
-      `;
-
-
-      const marker =
-        L.marker([
+    const marker =
+      L.marker(
+        [
           ride.meeting_lat,
           ride.meeting_lng
-        ])
-        .addTo(map)
-        .bindPopup(
-          popupHtml,
-          {
-            maxWidth: 320
-          }
-        );
+        ]
+      )
+      .addTo(map)
+      .bindPopup(
+        `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
+        `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
+        `🕐 ${escapeHtml(ride.ride_time)}`
+      );
 
-      rideMarkers.push(marker);
+
+    rideMarkers.push(
+      marker
+    );
+
+  });
+
+}
+
+function renderRideMarkers() {
+
+  clearRideMarkers();
+
+
+  const rides =
+    getRides();
+
+
+  rides.forEach(function(ride) {
+
+    if (
+      typeof ride.lat !== 'number' ||
+      typeof ride.lng !== 'number'
+    ) {
+
+      return;
 
     }
-  );
+
+
+    const marker =
+      L.marker(
+        [ride.lat, ride.lng]
+      )
+      .addTo(map)
+      .bindPopup(
+        `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
+        `📅 ${escapeHtml(formatDate(ride.date))}<br>` +
+        `🕐 ${escapeHtml(ride.time)}<br>` +
+        `📍 ${escapeHtml(ride.location)}`
+      );
+
+
+    rideMarkers.push(
+      marker
+    );
+
+  });
+
 }
+
+
 // =========================================================
 // RENDER RIDES
 // =========================================================
