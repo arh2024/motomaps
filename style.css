@@ -1,5 +1,6 @@
 /* =========================================================
    MOTO MAPS
+   Основні стилі застосунку
    ========================================================= */
 
 * {
@@ -80,7 +81,7 @@ button {
 
 
 /* =========================================================
-   APP
+   ЗАСТОСУНОК
    ========================================================= */
 
 .app {
@@ -96,7 +97,7 @@ button {
 
 
 /* =========================================================
-   MAP
+   КАРТА
    ========================================================= */
 
 #map {
@@ -146,7 +147,7 @@ html[data-theme="light"] .leaflet-tile-pane {
 
 
 /* =========================================================
-   HEADER
+   ВЕРХНЯ ПАНЕЛЬ
    ========================================================= */
 
 .top-header {
@@ -313,7 +314,7 @@ html[data-theme="light"] .top-header {
 
 
 /* =========================================================
-   SEARCH
+   ПОШУК
    ========================================================= */
 
 .search-box {
@@ -374,7 +375,7 @@ html[data-theme="light"] .search-box {
 
 
 /* =========================================================
-   MAP FILTERS
+   ФІЛЬТРИ КАРТИ
    ========================================================= */
 
 .map-filters {
@@ -432,7 +433,7 @@ html[data-theme="light"] .map-filter {
 
 
 /* =========================================================
-   WEATHER BUTTON
+   КНОПКА ПОГОДИ
    ========================================================= */
 
 .weather-button {
@@ -475,7 +476,7 @@ html[data-theme="light"] .weather-button {
 
 
 /* =========================================================
-   MAP CONTROLS
+   КЕРУВАННЯ КАРТОЮ
    ========================================================= */
 
 .map-controls {
@@ -528,7 +529,7 @@ html[data-theme="light"] .map-control {
 
 
 /* =========================================================
-   ADD BUTTON
+   КНОПКА ДОДАВАННЯ
    ========================================================= */
 
 .map-add-button {
@@ -568,7 +569,7 @@ html[data-theme="light"] .map-control {
 
 
 /* =========================================================
-   BOTTOM NAV
+   НИЖНЯ НАВІГАЦІЯ
    ========================================================= */
 
 .bottom-nav {
@@ -641,7 +642,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   SCREENS
+   ЕКРАНИ
    ========================================================= */
 
 .app-screen {
@@ -712,7 +713,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   CLOSE
+   КНОПКИ ЗАКРИТТЯ
    ========================================================= */
 
 .back-button {
@@ -762,7 +763,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   RIDES
+   МОТОПОЇЗДКИ
    ========================================================= */
 
 .rides-toolbar {
@@ -917,7 +918,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   PROFILE
+   ПРОФІЛЬ
    ========================================================= */
 
 .profile-avatar-large {
@@ -1026,7 +1027,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   SETTINGS
+   НАЛАШТУВАННЯ
    ========================================================= */
 
 .settings-row {
@@ -1118,7 +1119,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   BUTTONS
+   КНОПКИ
    ========================================================= */
 
 .secondary-btn,
@@ -1176,7 +1177,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   MODAL
+   МОДАЛЬНІ ВІКНА
    ========================================================= */
 
 .modal {
@@ -1386,7 +1387,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   ADDRESS SEARCH
+   ПОШУК АДРЕСИ
    ========================================================= */
 
 .address-search-row {
@@ -1513,7 +1514,7 @@ html[data-theme="light"] .bottom-nav {
 }
 
 /* =========================================================
-   AUTH
+   АВТОРИЗАЦІЯ
    ========================================================= */
 
 .auth-tabs {
@@ -1601,7 +1602,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   WEATHER
+   ПОГОДА
    ========================================================= */
 
 .weather-modal {
@@ -1813,7 +1814,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   MAP MEETING MARKER
+   МАРКЕР МІСЦЯ ЗУСТРІЧІ
    ========================================================= */
 
 .meeting-marker {
@@ -1863,7 +1864,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   SCROLLBAR
+   СМУГА ПРОКРУЧУВАННЯ
    ========================================================= */
 
 ::-webkit-scrollbar {
@@ -1886,7 +1887,7 @@ html[data-theme="light"] .bottom-nav {
 
 
 /* =========================================================
-   MOBILE
+   МОБІЛЬНА ВЕРСІЯ
    ========================================================= */
 
 @media (max-width: 600px) {
@@ -2574,4 +2575,524 @@ html[data-theme="dark"] .profile-fullscreen {
     min-height: 76px;
   }
 
+}
+
+/* =========================================================
+   ПОВНОЕКРАННИЙ ЕКРАН «МОТОПОЇЗДКИ»
+   ========================================================= */
+
+#rides {
+  position: fixed !important;
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 3000 !important;
+
+  display: none;
+
+  padding: 0 !important;
+
+  background: var(--bg) !important;
+
+  overflow: hidden !important;
+}
+
+
+/* =========================================================
+   ШАПКА МОТОПОЇЗДОК
+   ========================================================= */
+
+#rides .rides-screen-header {
+  position: relative;
+
+  width: 100%;
+  height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 16px;
+
+  background: var(--bg);
+
+  border-bottom: 1px solid var(--border);
+}
+
+#rides .rides-screen-header h1 {
+  flex: 1;
+
+  margin: 0;
+
+  text-align: center;
+
+  color: var(--text);
+
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+
+
+/* =========================================================
+   КНОПКА ЗАКРИТТЯ
+   ========================================================= */
+
+#rides .rides-screen-header .back-button {
+  position: relative;
+  z-index: 5000;
+
+  flex: 0 0 44px;
+
+  width: 44px;
+  height: 44px;
+
+  margin: 0;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 50%;
+
+  background: var(--panel) !important;
+  color: var(--text) !important;
+
+  box-shadow: none !important;
+
+  font-size: 27px;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+
+/* =========================================================
+   КНОПКА СТВОРЕННЯ
+   ========================================================= */
+
+#rides .rides-add-button {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  z-index: 5000;
+
+  width: 56px;
+  height: 56px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  background: var(--accent);
+  color: #ffffff;
+
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+  pointer-events: auto;
+
+  box-shadow: none !important;
+}
+
+
+/* =========================================================
+   СПИСОК МОТОПОЇЗДОК
+   ========================================================= */
+
+#rides #ridesList {
+  padding-bottom: 100px;
+  width: 100%;
+  height: calc(100vh - 70px);
+
+  padding: 16px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+/* =========================================================
+   ЕКРАН СТВОРЕННЯ МОТОПОЇЗДКИ
+   ========================================================= */
+
+#modal.ride-create-screen {
+  position: fixed !important;
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  z-index: 4000 !important;
+
+  display: none;
+
+  flex-direction: column;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  background: var(--bg) !important;
+
+  overflow: hidden !important;
+
+  box-shadow: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+
+/* =========================================================
+   ШАПКА СТВОРЕННЯ
+   ========================================================= */
+
+#modal .ride-create-header {
+  position: relative;
+
+  flex: 0 0 70px;
+
+  width: 100%;
+  height: 70px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 16px;
+
+  background: var(--bg);
+
+  border-bottom: 1px solid var(--border);
+}
+
+#modal .ride-create-header h1 {
+  flex: 1;
+
+  margin: 0;
+
+  text-align: center;
+
+  color: var(--text);
+
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .4px;
+}
+
+
+/* =========================================================
+   КНОПКА ЗАКРИТТЯ
+   ========================================================= */
+
+#modal .ride-create-header .back-button {
+  flex: 0 0 44px;
+
+  width: 44px;
+  height: 44px;
+
+  margin: 0;
+
+  border: 1px solid var(--border) !important;
+  border-radius: 50%;
+
+  background: var(--panel) !important;
+  color: var(--text) !important;
+
+  box-shadow: none !important;
+
+  font-size: 27px;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+#modal .ride-create-header-spacer {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+}
+
+
+/* =========================================================
+   ВМІСТ ФОРМИ
+   ========================================================= */
+
+#modal .ride-create-content {
+  flex: 1;
+
+  width: 100%;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 20px 16px 100px;
+}
+
+#modal .ride-form {
+  width: 100%;
+  max-width: 700px;
+
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   ПОЛЯ ФОРМИ
+   ========================================================= */
+
+#modal .ride-form label {
+  display: block;
+
+  margin: 0 0 8px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#modal .ride-form input {
+  width: 100%;
+  height: 48px;
+
+  margin-bottom: 18px;
+  padding: 0 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  outline: none;
+
+  background: var(--panel);
+  color: var(--text);
+
+  font-size: 15px;
+}
+
+#modal .ride-form input:focus {
+  border-color: var(--turquoise);
+
+  box-shadow: none !important;
+}
+
+
+/* =========================================================
+   ДАТА ТА ЧАС
+   ========================================================= */
+
+#modal .ride-form-row {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+}
+
+#modal .ride-form-field {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   АДРЕСА
+   ========================================================= */
+
+#modal .ride-address-row {
+  display: flex;
+
+  gap: 8px;
+}
+
+#modal .ride-address-row input {
+  flex: 1;
+}
+
+#modal .ride-address-row button {
+  flex: 0 0 48px;
+
+  width: 48px;
+  height: 48px;
+
+  margin: 0;
+}
+
+
+/* =========================================================
+   СТАТУС ТОЧКИ ЗБОРУ
+   ========================================================= */
+
+#modal .location-status {
+  width: 100%;
+
+  margin: 0 0 14px;
+  padding: 12px 14px;
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  background: var(--panel);
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   РЕЗУЛЬТАТИ ПОШУКУ АДРЕСИ
+   ========================================================= */
+
+#modal .address-results {
+  width: 100%;
+}
+
+#modal .address-results:empty {
+  display: none;
+}
+
+
+/* =========================================================
+   КНОПКИ
+   ========================================================= */
+
+#modal .ride-form .secondary-btn,
+#modal .ride-form .create-btn,
+#modal .ride-form .cancel-btn {
+  width: 100%;
+
+  min-height: 48px;
+
+  margin-top: 12px;
+}
+
+#modal .ride-form .create-btn {
+  background: var(--turquoise);
+
+  color: #001719;
+
+  border: none;
+}
+
+#modal .ride-form .cancel-btn {
+  background: transparent;
+
+  color: var(--text-secondary);
+
+  border: none;
+}
+
+
+/* =========================================================
+   БЕЗ ТІНЕЙ ТА РОЗМИТТЯ
+   ========================================================= */
+
+#rides,
+#rides *,
+#modal.ride-create-screen,
+#modal.ride-create-screen * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+
+/* =========================================================
+   АДАПТАЦІЯ ДЛЯ ВУЗЬКОГО ЕКРАНА
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  #rides .rides-screen-header h1,
+  #modal .ride-create-header h1 {
+    font-size: 16px;
+  }
+
+  #modal .ride-form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+}
+/* =========================================================
+   СПИСОК МОТОПОЇЗДОК — БЕЗ КАРТОК
+   ========================================================= */
+
+#ridesList {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+/* Одна мотопоїздка */
+#ridesList .ride-card {
+  width: 100%;
+  box-sizing: border-box;
+
+  margin: 0;
+  padding: 22px 20px;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+
+  border-bottom: 1px solid var(--border);
+}
+
+/* Остання поїздка без лінії знизу */
+#ridesList .ride-card:last-child {
+  border-bottom: none;
+}
+
+/* Назва */
+#ridesList .ride-card h3 {
+  margin: 0 0 10px 0;
+}
+
+/* Автор */
+#ridesList .ride-creator,
+#ridesList .ride-bike {
+  margin: 4px 0;
+}
+
+/* Інформація */
+#ridesList .ride-meta {
+  margin-top: 12px;
+}
+
+/* Точка збору */
+#ridesList .ride-location {
+  margin-top: 12px;
+}
+
+/* Учасники */
+#ridesList .ride-participants {
+  margin-top: 12px;
+}
+
+/* Кнопки */
+#ridesList .ride-actions {
+  margin-top: 14px;
+}
+
+/* Порожній список */
+#ridesList .empty-state {
+  width: 100%;
+  box-sizing: border-box;
+
+  margin: 0;
+  padding: 40px 20px;
+
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }

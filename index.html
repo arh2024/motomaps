@@ -226,16 +226,28 @@
        ЕКРАНИ
        ===================================================== -->
 
-  <section
-    id="rides"
-    class="app-screen"
-  ></section>
+<section id="rides" class="app-screen">
 
+  <div class="rides-screen-header">
 
-  <section
-    id="chat"
-    class="app-screen"
-  ></section>
+  <h1>МОТОПОЇЗДКИ</h1>
+
+  <button
+    class="back-button"
+    type="button"
+    onclick="closeCurrentScreen()"
+    aria-label="Закрити"
+  >
+    ×
+  </button>
+
+</div>
+
+  <div id="ridesList" class="rides-list">
+    <!-- Список мотопоїздок заповнюється через JavaScript -->
+  </div>
+
+</section>
 
 
   <section
@@ -250,19 +262,6 @@
   ></section>
 
 
-  <!-- =====================================================
-       КНОПКА ЗАКРИТТЯ ЕКРАНУ
-       ===================================================== 
-
-  <button
-    id="backButton"
-    class="back-button"
-    type="button"
-    onclick="goBack()"
-  >
-    ×
-  </button>
--->
 
   <!-- =====================================================
        НИЖНЯ НАВІГАЦІЯ
@@ -287,8 +286,9 @@
   <!-- =====================================================
        КНОПКА СТВОРЕННЯ ПОЇЗДКИ
        ===================================================== -->
+
 <button
-      id="navRides"
+      id="navCreateRide"
       type="button"
       class="nav-item"
       onclick="openModal()"
@@ -302,22 +302,16 @@
 
 </div>
 
+<!-- =========================================================
+     ЕКРАН СТВОРЕННЯ МОТОПОЇЗДКИ
+     ========================================================= -->
 
-<!-- =====================================================
-     МОДАЛЬНЕ ВІКНО — СТВОРЕННЯ ПОЇЗДКИ
-     ===================================================== -->
+<div id="modal" class="ride-create-screen">
 
-<div
-  id="modal"
-  class="modal"
-  role="dialog"
-  aria-modal="true"
->
-
-  <div class="modal-content">
+  <div class="ride-create-header">
 
     <button
-      class="close"
+      class="back-button"
       type="button"
       onclick="closeModal()"
       aria-label="Закрити"
@@ -325,163 +319,144 @@
       ×
     </button>
 
+    <h1>СТВОРИТИ МОТОПОЇЗДКУ</h1>
 
-    <div class="modal-header">
+    <div class="ride-create-header-spacer"></div>
 
-      <div class="modal-icon">
-        🏍️
-      </div>
-
-      <div>
-
-        <h2>
-          Нова мотопоїздка
-        </h2>
-
-        <p>
-          Збери свою компанію та вирушайте разом.
-        </p>
-
-      </div>
-
-    </div>
+  </div>
 
 
-    <label for="rideName">
-      Назва мотопоїздки
-    </label>
+  <div class="ride-create-content">
 
-    <input
-      id="rideName"
-      type="text"
-      maxlength="100"
-      placeholder="Наприклад: Вечірня поїздка"
-      autocomplete="off"
-    >
+    <div class="ride-form">
 
-
-    <div class="form-row">
-
-      <div class="form-column">
-
-        <label for="rideDate">
-          Дата
-        </label>
-
-        <input
-          id="rideDate"
-          type="date"
-        >
-
-      </div>
-
-
-      <div class="form-column">
-
-        <label for="rideTime">
-          Час збору
-        </label>
-
-        <input
-          id="rideTime"
-          type="time"
-        >
-
-      </div>
-
-    </div>
-
-
-    <label for="ridePeople">
-      Кількість учасників
-    </label>
-
-    <input
-      id="ridePeople"
-      type="number"
-      min="1"
-      max="1000"
-      value="10"
-    >
-
-
-    <!-- =================================================
-         ПОШУК АДРЕСИ
-         ================================================= -->
-
-    <label for="rideAddress">
-      📍 Місце збору
-    </label>
-
-    <div class="address-search-row">
+      <label for="rideName">
+        Назва мотопоїздки
+      </label>
 
       <input
-        id="rideAddress"
+        id="rideName"
         type="text"
-        placeholder="Введіть адресу або місце..."
+        placeholder="Наприклад: Вечірній виїзд"
         autocomplete="off"
       >
 
+
+      <div class="ride-form-row">
+
+        <div class="ride-form-field">
+
+          <label for="rideDate">
+            Дата
+          </label>
+
+          <input
+            id="rideDate"
+            type="date"
+          >
+
+        </div>
+
+
+        <div class="ride-form-field">
+
+          <label for="rideTime">
+            Час
+          </label>
+
+          <input
+            id="rideTime"
+            type="time"
+          >
+
+        </div>
+
+      </div>
+
+
+      <label for="ridePeople">
+        Кількість учасників
+      </label>
+
+      <input
+        id="ridePeople"
+        type="number"
+        min="1"
+        max="100"
+        value="5"
+      >
+
+
+      <label for="rideAddress">
+        Точка збору
+      </label>
+
+      <div class="ride-address-row">
+
+        <input
+          id="rideAddress"
+          type="text"
+          placeholder="Введіть адресу"
+          autocomplete="off"
+        >
+
+        <button
+          id="searchMeetingAddress"
+          type="button"
+          class="secondary-btn"
+        >
+          🔍
+        </button>
+
+      </div>
+
+
+      <div
+        id="addressResults"
+        class="address-results"
+      ></div>
+
+
+      <div
+        id="locationStatus"
+        class="location-status"
+      >
+        📍 Точку збору не вибрано
+      </div>
+
+
+      <button
+        id="chooseLocation"
+        type="button"
+        class="secondary-btn"
+        onclick="chooseLocation()"
+      >
+        📍 ВИБРАТИ ТОЧКУ НА КАРТІ
+      </button>
+
+
+<button
+  class="create-btn"
+  type="button"
+  onclick="openCreateRideScreen()"
+>
+  + Створити мотопоїздку
+</button>
+
+
       <button
         type="button"
-        class="address-search-button"
-        onclick="searchMeetingAddress()"
+        class="cancel-btn"
+        onclick="closeModal()"
       >
-        🔎
+        СКАСУВАТИ
       </button>
 
     </div>
 
-
-    <div
-      id="addressResults"
-      class="address-results"
-    ></div>
-
-
-    <div
-      id="locationStatus"
-      class="select-location"
-    >
-      📍 Точку збору ще не вибрано
-    </div>
-
-
-    <button
-      class="secondary-btn"
-      type="button"
-      onclick="chooseLocation()"
-    >
-      📍 Обрати точку на карті
-    </button>
-
-
-    <p class="hint">
-      Можна знайти місце за адресою або вибрати точку безпосередньо на карті.
-    </p>
-
-
-    <button
-      class="create-btn"
-      type="button"
-      onclick="saveRide()"
-    >
-      🏍️ ПОЇХАЛИ
-    </button>
-
-
-    <button
-      class="cancel-btn"
-      type="button"
-      onclick="closeModal()"
-    >
-      Скасувати
-    </button>
-
   </div>
 
 </div>
-
 
 <!-- =====================================================
      МОДАЛЬНЕ ВІКНО — МОТОЦИКЛІСТИ
@@ -810,7 +785,7 @@
 
 
 <!-- =====================================================
-     LIBRARIES
+     БІБЛІОТЕКИ
      ===================================================== -->
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

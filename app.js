@@ -348,7 +348,6 @@ function hideAllScreens() {
 
   [
     'rides',
-    'chat',
     'profile',
     'settings'
   ]
@@ -440,6 +439,30 @@ function hideCloseButton() {
 
 }
 
+// =========================================================
+// ЗАКРИТТЯ ПОТОЧНОГО ЕКРАНУ
+// =========================================================
+
+function closeCurrentScreen() {
+
+  if (currentScreen === 'rides') {
+    showMap();
+    return;
+  }
+
+  if (currentScreen === 'profile') {
+    showMap();
+    return;
+  }
+
+  if (currentScreen === 'settings') {
+    showProfile();
+    return;
+  }
+
+  showMap();
+}
+
 
 function showMap() {
 
@@ -486,36 +509,73 @@ function showSuccessMessage(message) {
 
 }
 
+// =========================================================
+// ЕКРАН МОТОПОЇЗДОК
+// =========================================================
+
 function showRides() {
 
+  // Закриваємо екран створення мотопоїздки.
+  closeModal();
+
+  // Встановлюємо поточний екран.
   currentScreen = 'rides';
 
-  hideMapInterface();
-
-  hideCloseButton();
-
+  // Повністю ховаємо інші екрани.
   hideAllScreens();
 
-  setActiveNav('rides');
-  localStorage.setItem('unreadRides', '0');
-  updateNotificationsBadge();
+  // Ховаємо інтерфейс карти.
+  hideMapInterface();
 
   const rides =
-    document.getElementById(
-      'rides'
+    document.getElementById('rides');
+
+  if (!rides) {
+    console.error(
+      'Елемент #rides не знайдено.'
     );
+    return;
+  }
 
+  // Показуємо тільки екран мотопоїздок.
+  rides.style.display = 'block';
 
-  rides.style.display =
-    'block';
+  // Завантажуємо мотопоїздки з Supabase.
+  loadRidesFromSupabase()
+    .then(function(ridesFromSupabase) {
 
+      renderRides(
+        ridesFromSupabase || []
+      );
 
- loadRidesFromSupabase()
-  .then(function(rides) {
+    })
+    .catch(function(error) {
 
-    renderRides(rides);
+      console.error(
+        'Помилка завантаження мотопоїздок:',
+        error
+      );
 
-  });
+      const list =
+        document.getElementById('ridesList');
+
+      if (list) {
+
+        list.innerHTML = `
+          <div class="empty-state">
+            <h3>
+              Не вдалося завантажити мотопоїздки
+            </h3>
+
+            <p>
+              Спробуйте ще раз.
+            </p>
+          </div>
+        `;
+
+      }
+
+    });
 
 }
 async function joinRide(rideId) {
@@ -1764,14 +1824,15 @@ function renderRideMarkers() {
 
 
 // =========================================================
-// RENDER RIDES
+// ВІДОБРАЖЕННЯ МОТОПОЇЗДОК
 // =========================================================
+
 async function renderRides(ridesFromSupabase) {
 
+  // Працюємо тільки з контейнером списку.
+  // Сам екран #rides більше не перезаписуємо.
   const container =
-    document.getElementById(
-      'rides'
-    );
+    document.getElementById('ridesList');
 
   if (!container) return;
 
@@ -1780,6 +1841,10 @@ async function renderRides(ridesFromSupabase) {
 
   let participantRows = [];
   let creatorProfiles = {};
+
+  // =======================================================
+  // УЧАСНИКИ
+  // =======================================================
 
   if (
     supabaseClient &&
@@ -1791,28 +1856,27 @@ async function renderRides(ridesFromSupabase) {
         return ride.id;
       });
 
-const {
-  data,
-  error
-} =
-  await supabaseClient
-    .from('ride_participants')
-    .select(`
-      ride_id,
-      user_id,
-      profiles (
-        nickname,
-        bike
-      )
-    `)
-        .in(
-          'ride_id',
-          rideIds
+    const {
+      data,
+      error
+    } = await supabaseClient
+      .from('ride_participants')
+      .select(`
+        ride_id,
+        user_id,
+        profiles (
+          nickname,
+          bike
         )
-        .eq(
-          'status',
-          'joined'
-        );
+      `)
+      .in(
+        'ride_id',
+        rideIds
+      )
+      .eq(
+        'status',
+        'joined'
+      );
 
     if (error) {
 
@@ -1826,101 +1890,69 @@ const {
       participantRows =
         data || [];
 
-        const creatorIds = [
-  ...new Set(
-    rides
-      .map(function(ride) {
-        return ride.creator_id;
-      })
-      .filter(Boolean)
-  )
-];
+    }
 
-if (creatorIds.length) {
+    // =====================================================
+    // ПРОФІЛІ АВТОРІВ
+    // =====================================================
 
-  const {
-    data: creatorData,
-    error: creatorError
-  } = await supabaseClient
-    .from('profiles')
-    .select(`
-      id,
-      nickname,
-      bike
-    `)
-    .in('id', creatorIds);
+    const creatorIds = [
+      ...new Set(
+        rides
+          .map(function(ride) {
+            return ride.creator_id;
+          })
+          .filter(Boolean)
+      )
+    ];
 
-  if (creatorError) {
+    if (creatorIds.length) {
 
-    console.error(
-      'Помилка завантаження профілів авторів:',
-      creatorError
-    );
+      const {
+        data: creatorData,
+        error: creatorError
+      } = await supabaseClient
+        .from('profiles')
+        .select(`
+          id,
+          nickname,
+          bike
+        `)
+        .in(
+          'id',
+          creatorIds
+        );
 
-  } else {
+      if (creatorError) {
 
-    (creatorData || []).forEach(function(profile) {
+        console.error(
+          'Помилка завантаження профілів авторів:',
+          creatorError
+        );
 
-      creatorProfiles[profile.id] =
-        profile;
+      } else {
 
-    });
+        (creatorData || [])
+          .forEach(function(profile) {
 
-  }
-}
+            creatorProfiles[profile.id] =
+              profile;
+
+          });
+
+      }
 
     }
 
   }
 
-
-  let html = `
-
-    <div class="screen-card">
-
-      <div class="screen-title-row">
-
-        <div>
-
-          <span class="screen-eyebrow">
-            MOTO MAPS
-          </span>
-
-          <h2>
-            🏍️ Мотопоїздки
-          </h2>
-
-        </div>
-
-        <button
-          class="rides-add-button"
-          type="button"
-          onclick="showMap()"
-          aria-label="Закрити"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div class="rides-toolbar">
-
-        <div class="ride-counter">
-          ${rides.length}
-          ${rides.length === 1
-            ? 'поїздка'
-            : 'поїздок'}
-        </div>
-
-      </div>
-
-  `;
-
+  // =======================================================
+  // НЕМАЄ МОТОПОЇЗДОК
+  // =======================================================
 
   if (!rides.length) {
 
-    html += `
-
+    container.innerHTML = `
       <div class="empty-state">
 
         <div class="empty-state-icon">
@@ -1944,190 +1976,203 @@ if (creatorIds.length) {
         </button>
 
       </div>
-
     `;
 
-  } else {
-
-    rides.forEach(function(ride) {
-
-      const participants =
-        participantRows.filter(
-          function(item) {
-            return item.ride_id === ride.id;
-          }
-        );
-
-
-      const ridersCount =
-        participants.length;
-
-
-      const riderNames =
-        participants
-          .map(function(item) {
-
-            return (
-              item.profiles &&
-              item.profiles.nickname
-            )
-              ? item.profiles.nickname
-              : 'Moto Rider';
-
-          });
-
-
-      let participantsHtml = '';
-
-      if (riderNames.length) {
-
-        participantsHtml = `
-
-          <div class="ride-participants">
-
-            <div class="ride-participants-title">
-              👥 Учасники:
-            </div>
-
-            <div class="ride-participants-list">
-
-              ${riderNames
-                .map(function(name) {
-
-                  return `
-                    <span class="ride-participant-name">
-                      ${escapeHtml(name)}
-                    </span>
-                  `;
-
-                })
-                .join('')}
-
-            </div>
-
-          </div>
-
-        `;
-
-      }
-
-
-      html += `
-
-        <article class="ride-card">
-
-          <h3>
-            🏍️ ${escapeHtml(ride.name)}
-          </h3>
-${creatorProfiles[ride.creator_id] ? `
-  <div class="ride-creator">
-    👤 Створив:
-    <strong>
-      ${escapeHtml(
-        creatorProfiles[ride.creator_id].nickname ||
-        'Moto Rider'
-      )}
-    </strong>
-  </div>
-
-  <div class="ride-bike">
-    🏍️ Мотоцикл:
-    <strong>
-      ${escapeHtml(
-        creatorProfiles[ride.creator_id].bike ||
-        'Не вказано'
-      )}
-    </strong>
-  </div>
-` : ''}
-          <div class="ride-meta">
-
-            <div>
-              📅
-              ${escapeHtml(
-                formatDate(
-                  ride.ride_date
-                )
-              )}
-            </div>
-
-            <div>
-              🕐
-              ${escapeHtml(
-                ride.ride_time
-              )}
-            </div>
-
-            <div>
-              👥 до
-              ${escapeHtml(
-                ride.max_people
-              )}
-            </div>
-
-            <div>
-              🏍️
-              ${ridersCount}
-              учасн.
-            </div>
-
-          </div>
-
-          <div class="ride-location">
-
-            📍
-            ${escapeHtml(
-              ride.location ||
-              'Точку збору не вказано'
-            )}
-
-          </div>
-
-          ${participantsHtml}
-
-          <div class="ride-actions">
-
-            <button
-              class="ride-action"
-              type="button"
-              onclick="showRideRiders('${ride.id}')"
-            >
-              👥 Мотоциклісти
-            </button>
-
-            <button
-              class="ride-action"
-              type="button"
-              onclick="joinRide('${ride.id}')"
-            >
-              🏍️ Приєднатися
-            </button>
-
-            <button
-              class="ride-action"
-              type="button"
-              onclick="openRideOnMap('${ride.id}')"
-            >
-              📍 На карті
-            </button>
-
-          </div>
-
-        </article>
-
-      `;
-
-    });
-
+    return;
   }
 
+  // =======================================================
+  // СПИСОК МОТОПОЇЗДОК
+  // =======================================================
 
-  html += `
-      </div>
-  `;
+  let html = '';
 
-  container.innerHTML =
-    html;
+  rides.forEach(function(ride) {
+
+    const participants =
+      participantRows.filter(
+        function(item) {
+          return item.ride_id === ride.id;
+        }
+      );
+
+    const ridersCount =
+      participants.length;
+
+    // -----------------------------------------------------
+    // ІМЕНА УЧАСНИКІВ
+    // -----------------------------------------------------
+
+    const riderNames =
+      participants
+        .map(function(item) {
+
+          return (
+            item.profiles &&
+            item.profiles.nickname
+          )
+            ? item.profiles.nickname
+            : 'Moto Rider';
+
+        });
+
+    let participantsHtml = '';
+
+    if (riderNames.length) {
+
+      participantsHtml = `
+        <div class="ride-participants">
+
+          <div class="ride-participants-title">
+            👥 Учасники:
+          </div>
+
+          <div class="ride-participants-list">
+
+            ${riderNames
+              .map(function(name) {
+
+                return `
+                  <span class="ride-participant-name">
+                    ${escapeHtml(name)}
+                  </span>
+                `;
+
+              })
+              .join('')}
+
+          </div>
+
+        </div>
+      `;
+
+    }
+
+    // -----------------------------------------------------
+    // АВТОР МОТОПОЇЗДКИ
+    // -----------------------------------------------------
+
+    const creator =
+      creatorProfiles[ride.creator_id];
+
+    const creatorName =
+      creator && creator.nickname
+        ? creator.nickname
+        : 'Moto Rider';
+
+    const creatorBike =
+      creator && creator.bike
+        ? creator.bike
+        : 'Не вказано';
+
+    // -----------------------------------------------------
+    // КАРТКА
+    // -----------------------------------------------------
+
+    html += `
+      <article class="ride-card">
+
+        <h3>
+          🏍️ ${escapeHtml(ride.name)}
+        </h3>
+
+        <div class="ride-creator">
+          👤 Створив:
+          <strong>
+            ${escapeHtml(creatorName)}
+          </strong>
+        </div>
+
+        <div class="ride-bike">
+          🏍️ Мотоцикл:
+          <strong>
+            ${escapeHtml(creatorBike)}
+          </strong>
+        </div>
+
+        <div class="ride-meta">
+
+          <div>
+            📅
+            ${escapeHtml(
+              formatDate(
+                ride.ride_date
+              )
+            )}
+          </div>
+
+          <div>
+            🕐
+            ${escapeHtml(
+              ride.ride_time || ''
+            )}
+          </div>
+
+          <div>
+            👥 до
+            ${escapeHtml(
+              ride.max_people
+            )}
+          </div>
+
+          <div>
+            🏍️
+            ${ridersCount}
+            учасн.
+          </div>
+
+        </div>
+
+        <div class="ride-location">
+
+          📍
+          ${escapeHtml(
+            ride.location ||
+            'Точку збору не вказано'
+          )}
+
+        </div>
+
+        ${participantsHtml}
+
+        <div class="ride-actions">
+
+          <button
+            class="ride-action"
+            type="button"
+            onclick="showRideRiders('${ride.id}')"
+          >
+            👥 Мотоциклісти
+          </button>
+
+          <button
+            class="ride-action"
+            type="button"
+            onclick="joinRide('${ride.id}')"
+          >
+            🏍️ Приєднатися
+          </button>
+
+          <button
+            class="ride-action"
+            type="button"
+            onclick="openRideOnMap('${ride.id}')"
+          >
+            📍 На карті
+          </button>
+
+        </div>
+
+      </article>
+    `;
+
+  });
+
+  // =======================================================
+  // ВИВОДИМО ТІЛЬКИ СПИСОК
+  // =======================================================
+
+  container.innerHTML = html;
 
 }
 // =========================================================
@@ -2553,7 +2598,6 @@ async function renderProfile() {
 
 
       <div class="profile-main">
-
 
         <button
           class="profile-avatar-button"
