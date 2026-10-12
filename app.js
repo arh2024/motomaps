@@ -33,30 +33,18 @@ if (window.supabase) {
 // КАРТА
 // =========================================================
 
-const map =
-  L.map('map').setView(
-    [47.8388, 35.1396],
-    12
-  );
+const map = new maplibregl.Map({
+  container: 'map',
+  style: 'https://tiles.openfreemap.org/styles/liberty',
+  center: [35.1396, 47.8388],
+  zoom: 12
+});
 
 
 // Використовуємо OSM і для світлої,
 // і для темної теми.
 // Темна тема робиться CSS-фільтром.
 // Це прибирає залежність від CARTO API.
-
-const mapLayer =
-  L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-      maxZoom: 19,
-      attribution:
-        '&copy; OpenStreetMap contributors'
-    }
-  );
-
-
-mapLayer.addTo(map);
 
 
 // =========================================================
@@ -204,96 +192,65 @@ function escapeHtml(value) {
 
 }
 
-
 // =========================================================
 // GPS
 // =========================================================
 
 function findMe() {
-
   if (!navigator.geolocation) {
-
-    alert(
-      'Ваш браузер не підтримує геолокацію.'
-    );
-
+    alert('Ваш браузер не підтримує геолокацію.');
     return;
-
   }
 
-
   navigator.geolocation.getCurrentPosition(
-
     function(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
 
-      const lat =
-        position.coords.latitude;
+      // Переміщуємо карту до поточного місцезнаходження
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 15
+      });
 
-      const lng =
-        position.coords.longitude;
+      // Створюємо елемент маркера
+      if (!myMarker) {
+        const markerElement = document.createElement('div');
 
+        markerElement.className = 'my-location-marker';
+        markerElement.innerHTML =
+          '<div class="my-location-dot"></div>';
 
-      map.setView(
-        [lat, lng],
-        15
-      );
-
-
-      if (myMarker) {
-
-        myMarker.setLatLng(
-          [lat, lng]
-        );
-
-      } else {
-
-        const icon =
-          L.divIcon({
-
-            className:
-              'my-location-marker',
-
-            html:
-              '<div class="my-location-dot"></div>',
-
-            iconSize:
-              [32, 32],
-
-            iconAnchor:
-              [16, 16]
-
-          });
-
-
-        myMarker =
-          L.marker(
-            [lat, lng],
-            {
-              icon
-            }
+        myMarker = new maplibregl.Marker({
+          element: markerElement,
+          anchor: 'center'
+        })
+          .setLngLat([lng, lat])
+          .setPopup(
+            new maplibregl.Popup({ offset: 16 })
+              .setText('🏍️ Ви тут')
           )
-          .addTo(map)
-          .bindPopup(
-            '🏍️ Ви тут'
-          );
+          .addTo(map);
 
+        myMarker.togglePopup();
+      } else {
+        // Оновлюємо позицію наявного маркера
+        myMarker.setLngLat([lng, lat]);
       }
-
-      myMarker.openPopup();
-
     },
 
     function(error) {
+      console.error('Геолокація:', error);
 
-      console.error(
-        'Геолокація:',
-        error
-      );
-
-      alert(
-        'Дозвольте доступ до геолокації у браузері.'
-      );
-
+      if (error.code === 1) {
+        alert('Дозвольте доступ до геолокації у браузері.');
+      } else if (error.code === 2) {
+        alert('Не вдалося визначити ваше місцезнаходження.');
+      } else if (error.code === 3) {
+        alert('Час очікування GPS вичерпано. Спробуйте ще раз.');
+      } else {
+        alert('Помилка визначення місцезнаходження.');
+      }
     },
 
     {
@@ -301,11 +258,8 @@ function findMe() {
       timeout: 10000,
       maximumAge: 0
     }
-
   );
-
 }
-
 
 // =========================================================
 // NAVIGATION
@@ -525,7 +479,7 @@ function showMap() {
 
   setTimeout(function() {
 
-    map.invalidateSize();
+  map.resize();
 
   }, 100);
 
@@ -895,146 +849,58 @@ function closeModal() {
 }
 
 
-// =========================================================
+/// =========================================================
 // MEETING LOCATION
 // =========================================================
 
-function setMeetingLocation(
-  lat,
-  lng,
-  label
-) {
-
+function setMeetingLocation(lat, lng, label) {
   meetingLocation = {
-
-    lat:
-      Number(lat),
-
-    lng:
-      Number(lng),
-
-    label:
-      label || 'Точка збору'
-
+    lat: Number(lat),
+    lng: Number(lng),
+    label: label || 'Точка збору'
   };
 
-
   if (meetingMarker) {
-
-    meetingMarker.setLatLng(
-      [lat, lng]
-    );
-
+    meetingMarker.setLngLat([
+      Number(lng),
+      Number(lat)
+    ]);
   } else {
+    const markerElement = document.createElement('div');
 
-    const icon =
-      L.divIcon({
+    markerElement.className = 'meeting-marker';
+    markerElement.textContent = '🏍️';
 
-        className:
-          '',
-
-        html:
-          '<div class="meeting-marker">🏍️</div>',
-
-        iconSize:
-          [38, 38],
-
-        iconAnchor:
-          [19, 19]
-
-      });
-
-
-    meetingMarker =
-      L.marker(
-        [lat, lng],
-        {
-          icon,
-          draggable: true
-        }
-      )
+    meetingMarker = new maplibregl.Marker({
+      element: markerElement,
+      anchor: 'center',
+      draggable: true
+    })
+      .setLngLat([
+        Number(lng),
+        Number(lat)
+      ])
       .addTo(map);
 
+    meetingMarker.on('dragend', function() {
+      const position = meetingMarker.getLngLat();
 
-    meetingMarker.on(
-      'dragend',
-      function(event) {
+      meetingLocation.lat = position.lat;
+      meetingLocation.lng = position.lng;
+      meetingLocation.label = 'Точка на карті';
 
-        const position =
-          event.target.getLatLng();
-
-        meetingLocation.lat =
-          position.lat;
-
-        meetingLocation.lng =
-          position.lng;
-
-        meetingLocation.label =
-          'Точка на карті';
-
-        updateLocationStatus();
-
-      }
-    );
-
+      updateLocationStatus();
+    });
   }
 
+  const popup = new maplibregl.Popup({
+    offset: 16
+  }).setText('📍 ' + meetingLocation.label);
 
-  meetingMarker.bindPopup(
-    '📍 ' +
-    escapeHtml(
-      meetingLocation.label
-    )
-  );
-
+  meetingMarker.setPopup(popup);
 
   updateLocationStatus();
-
 }
-
-
-function updateLocationStatus() {
-
-  const element =
-    document.getElementById(
-      'locationStatus'
-    );
-
-
-  if (!element) return;
-
-
-  if (!meetingLocation) {
-
-    element.textContent =
-      '📍 Точку збору ще не вибрано';
-
-    return;
-
-  }
-
-
-  element.textContent =
-    '📍 ' +
-    meetingLocation.label;
-
-}
-
-
-function chooseLocation() {
-
-  closeModal();
-
-  choosingLocation = true;
-
-  showMap();
-
-  alert(
-    'Натисніть на карті місце збору.'
-  );
-
-}
-
 
 // Клік по карті
 
@@ -1730,26 +1596,17 @@ if (profileError) {
   );
 
 }
+
 // =========================================================
 // RIDE MARKERS
 // =========================================================
 
 function clearRideMarkers() {
+  rideMarkers.forEach(function(marker) {
+    marker.remove();
+  });
 
-  rideMarkers.forEach(
-    function(marker) {
-
-      map.removeLayer(
-        marker
-      );
-
-    }
-  );
-
-
-  rideMarkers =
-    [];
-
+  rideMarkers = [];
 }
 
 async function loadRideMarkersFromSupabase() {
@@ -1801,20 +1658,29 @@ async function loadRideMarkersFromSupabase() {
     }
 
 
-    const marker =
-      L.marker(
-        [
-          ride.meeting_lat,
-          ride.meeting_lng
-        ]
-      )
-      .addTo(map)
-.bindPopup(
-  `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
-  `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
-  `🕐 ${escapeHtml(ride.ride_time)}<br><br>` +
-  `<button type="button" onclick="joinRide('${ride.id}')">ПОЇХАТИ</button>`
-);
+const popup = new maplibregl.Popup({ offset: 25 })
+  .setHTML(
+    `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
+    `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
+    `🕐 ${escapeHtml(ride.ride_time)}<br><br>` +
+    `<button type="button" onclick="joinRide('${ride.id}')">ПОЇХАТИ</button>`
+  );
+
+const markerElement = document.createElement('div');
+markerElement.textContent = '🏍️';
+markerElement.style.fontSize = '28px';
+markerElement.style.cursor = 'pointer';
+
+const marker = new maplibregl.Marker({
+  element: markerElement,
+  anchor: 'bottom'
+})
+  .setLngLat([
+    Number(ride.meeting_lng),
+    Number(ride.meeting_lat)
+  ])
+  .setPopup(popup)
+  .addTo(map);
 
 
     rideMarkers.push(
@@ -1845,26 +1711,33 @@ function renderRideMarkers() {
 
     }
 
+const popup = new maplibregl.Popup({ offset: 25 })
+  .setHTML(
+    `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
+    `📅 ${escapeHtml(formatDate(ride.date))}<br>` +
+    `🕐 ${escapeHtml(ride.time)}<br>` +
+    `📍 ${escapeHtml(ride.location)}`
+  );
 
-    const marker =
-      L.marker(
-        [ride.lat, ride.lng]
-      )
-      .addTo(map)
-      .bindPopup(
-        `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
-        `📅 ${escapeHtml(formatDate(ride.date))}<br>` +
-        `🕐 ${escapeHtml(ride.time)}<br>` +
-        `📍 ${escapeHtml(ride.location)}`
-      );
+const markerElement = document.createElement('div');
+markerElement.textContent = '🏍️';
+markerElement.style.fontSize = '28px';
+markerElement.style.cursor = 'pointer';
 
+const marker = new maplibregl.Marker({
+  element: markerElement,
+  anchor: 'bottom'
+})
+  .setLngLat([
+    Number(ride.lng),
+    Number(ride.lat)
+  ])
+  .setPopup(popup)
+  .addTo(map);
 
-    rideMarkers.push(
-      marker
-    );
+rideMarkers.push(marker);
 
-  });
-
+});
 }
 
 
