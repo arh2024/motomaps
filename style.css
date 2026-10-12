@@ -31,7 +31,7 @@
 
   --shadow: 0 15px 50px rgba(0,0,0,.40);
 
-  --nav-height: 76px;
+  --nav-height: 50px;
 }
 
 
@@ -157,7 +157,7 @@ html[data-theme="light"] .leaflet-tile-pane {
   left: 0;
   right: 0;
 
-  height: 70px;
+  height: 55px;
 
   z-index: 2000;
 
@@ -175,7 +175,7 @@ html[data-theme="light"] .top-header {
 .brand {
   position: absolute;
 
-  top: 8px;
+  top: 4px;
   left: 16px;
 
   display: flex;
@@ -183,7 +183,7 @@ html[data-theme="light"] .top-header {
 
   gap: 8px;
 
-  height: 58px;
+  height: 48px;
 
   pointer-events: auto;
 }
@@ -1481,7 +1481,7 @@ html[data-theme="light"] .bottom-nav {
 
 .search-button {
   width: 44px;
-  height: 44px;
+  height: 42px;
 
   padding: 0;
 
@@ -1505,10 +1505,15 @@ html[data-theme="light"] .bottom-nav {
 }
 
 .search-button .search-icon {
-  font-size: 20px;
-  line-height: 1;
-}
+  width: 24px;
+  height: 24px;
 
+  display: block;
+
+  flex-shrink: 0;
+
+  transform: translateX(10px);
+}
 .search-button:active {
   transform: scale(.92);
 }
@@ -3095,4 +3100,145 @@ html[data-theme="dark"] .profile-fullscreen {
   border-radius: 0;
   box-shadow: none;
   background: transparent;
+}
+
+ /* =========================================================
+   ІКОНКА СПОВІЩЕНЬ
+  
+ ========================================================= */
+.notification-icon {
+  width: 21px;
+  height: 21px;
+
+  display: block;
+
+  fill: #ffffff;
+  stroke: var(--panel);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+ /* =========================================================
+   СПОВІЩЕННЯ — СВІТЛА ТЕМА
+   ========================================================= */
+
+[data-theme="light"] #notificationsButton {
+  background: transparent !important;
+
+  border: 2px solid #75888E !important;
+  border-radius: 50%;
+
+  box-shadow: none !important;
+}
+
+[data-theme="light"] #notificationsButton .notification-icon {
+  fill: #ffffff;
+  stroke: #75888E;
+}
+/* =========================================================
+   СПОВІЩЕННЯ — ТЕМНА ТЕМА
+   ========================================================= */
+
+[data-theme="dark"] #notificationsButton {
+  background: transparent !important;
+
+  border: 1px solid var(--text) !important;
+  border-radius: 50%;
+
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] #notificationsButton .notification-icon {
+  width: 18px;
+  height: 18px;
+
+  fill: var(--panel);
+  stroke: var(--text);
+
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* =========================================================
+   ПЕРЕМИКАЧ СВІТЛОЇ / ТЕМНОЇ ТЕМИ
+   ========================================================= */
+
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 50%;
+
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1;
+
+  box-shadow: none !important;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--border) !important;
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid #00c8bd;
+  outline-offset: 2px;
+}
+/* =========================================================
+   ВЕРХНЯЯ ПАНЕЛЬ — МИНИМАЛИСТИЧНЫЕ ИКОНКИ
+   ========================================================= */
+
+/* Пошук без окантовки */
+.search-button {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Перемикач теми без окантовки */
+.theme-toggle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Без підсвічування фону при наведенні */
+.search-button:hover,
+.theme-toggle:hover {
+  background: transparent !important;
+}
+/* =========================================================
+   MOTO MAPS — ИКОНКИ ВЕРХНЕЙ ПАНЕЛИ БЕЗ ОКАНТОВКИ
+   ========================================================= */
+
+.header-actions .search-button,
+.header-actions .theme-toggle,
+.header-actions #notificationsButton,
+.header-actions #headerAvatar {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+
+/* Убираем фон при наведении */
+.header-actions .search-button:hover,
+.header-actions .theme-toggle:hover,
+.header-actions #notificationsButton:hover,
+.header-actions #headerAvatar:hover {
+  background: transparent !important;
+  box-shadow: none !important;
 }

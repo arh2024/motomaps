@@ -106,6 +106,51 @@ function applyTheme(theme) {
     'motoTheme',
     safeTheme
   );
+  const themeToggleIcon =
+  document.getElementById('themeToggleIcon');
+
+if (themeToggleIcon) {
+  themeToggleIcon.innerHTML =
+    safeTheme === 'dark'
+      ? `
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2"></path>
+          <path d="M12 20v2"></path>
+          <path d="m4.93 4.93 1.42 1.42"></path>
+          <path d="m17.65 17.65 1.42 1.42"></path>
+          <path d="M2 12h2"></path>
+          <path d="M20 12h2"></path>
+          <path d="m4.93 19.07 1.42-1.42"></path>
+          <path d="m17.65 6.35 1.42-1.42"></path>
+        </svg>
+      `
+      : `
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path>
+        </svg>
+      `;
+}
 
   const toggle =
     document.getElementById('themeToggle');
@@ -2558,14 +2603,46 @@ async function renderProfile() {
     return;
   }
 
-  const nickname =
-    profileData.nickname ||
-    'Moto Rider';
+const nickname =
+  profileData.nickname ||
+  'Moto Rider';
 
-  const avatar =
-    profileData.avatar_url ||
-    '';
+const avatar =
+  profileData.avatar_url ||
+  '';
 
+const headerAvatarImage =
+  document.getElementById(
+    'headerAvatarImage'
+  );
+
+const headerAvatarFallback =
+  document.getElementById(
+    'headerAvatarFallback'
+  );
+
+if (avatar) {
+
+  if (headerAvatarImage) {
+    headerAvatarImage.src = avatar;
+    headerAvatarImage.hidden = false;
+  }
+
+  if (headerAvatarFallback) {
+    headerAvatarFallback.hidden = true;
+  }
+
+} else {
+
+  if (headerAvatarImage) {
+    headerAvatarImage.hidden = true;
+  }
+
+  if (headerAvatarFallback) {
+    headerAvatarFallback.hidden = false;
+  }
+
+}
   element.innerHTML = `
 
     <div class="profile-fullscreen">

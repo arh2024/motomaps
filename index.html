@@ -65,23 +65,44 @@
     </div>
 
 
-    <div class="header-actions">
-    
-    <button
-      class="search-button"
-      type="button"
-    aria-label="Пошук"
-  >
-  <span
+<div class="header-actions">
+
+  <!-- Пошук -->
+<button
+  class="search-button"
+  type="button"
+  aria-label="Пошук"
+  title="Пошук"
+>
+  <svg
     class="search-icon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
     aria-hidden="true"
   >
-    🔍
-  </span>
-      </button>
+    <circle cx="10.8" cy="10.8" r="6.8"></circle>
+    <path d="m16 16 4.2 4.2"></path>
+  </svg>
+</button>
+
+  <!-- Перемикач світлої / темної теми -->
+<button
+  id="themeToggle"
+  class="theme-toggle"
+  type="button"
+  aria-label="Змінити тему"
+  title="Змінити тему"
+  onclick="toggleTheme()"
+>
+  <span id="themeToggleIcon" aria-hidden="true">🌙</span>
+</button>
 
       
-  <button
+<button
   id="notificationsButton"
   class="icon-btn notifications-button"
   type="button"
@@ -89,24 +110,49 @@
   aria-label="Сповіщення"
   onclick="showRides()"
 >
-  🔔
+  <svg
+    class="notification-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"
+    />
+    <path
+      d="M10 21h4"
+    />
+  </svg>
+
   <span
     id="notificationsBadge"
     class="notifications-badge"
     hidden
   >0</span>
 </button>
+<button
+  id="headerAvatar"
+  class="avatar"
+  type="button"
+  onclick="showProfile()"
+  title="Профіль"
+  aria-label="Профіль"
+>
+  <img
+    id="headerAvatarImage"
+    class="header-avatar-image"
+    src=""
+    alt="Аватар"
+    hidden
+  >
 
-      <button
-        id="headerAvatar"
-        class="avatar"
-        type="button"
-        onclick="showProfile()"
-        title="Профіль"
-        aria-label="Профіль"
-      >
-        🏍️
-      </button>
+  <span
+    id="headerAvatarFallback"
+    class="header-avatar-fallback"
+    aria-hidden="true"
+  >
+    👤
+  </span>
+</button>
 
     </div>
 
