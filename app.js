@@ -33,18 +33,133 @@ if (window.supabase) {
 // КАРТА
 // =========================================================
 
+const MAP_STYLES = {
+  dark: 'https://tiles.openfreemap.org/styles/dark',
+  light: 'https://tiles.openfreemap.org/styles/liberty'
+};
+
+let activeMapStyle = MAP_STYLES[getSavedTheme()];
+
 const map = new maplibregl.Map({
   container: 'map',
-  style: 'https://tiles.openfreemap.org/styles/liberty',
+  style: activeMapStyle,
   center: [35.1396, 47.8388],
   zoom: 12
 });
 
+const DARK_ROAD_COLOR = [
+  'match',
+  ['get', 'class'],
+  'motorway', '#547ab1',
+  'motorway_link', '#758eaf',
+  'trunk', '#6d86a8',
+  'primary', '#5f7697',
+  'secondary', '#506783',
+  'tertiary', '#435873',
+  'minor', '#394d65',
+  'service', '#304258',
+  'track', '#354a61',
+  'path', '#30445b',
+  'cycleway', '#3b526d',
+  'pedestrian', '#3b526d',
+  '#3d526c'
+];
 
-// Використовуємо OSM і для світлої,
-// і для темної теми.
-// Темна тема робиться CSS-фільтром.
-// Це прибирає залежність від CARTO API.
+function applyDarkMapColors() {
+  if (activeMapStyle !== MAP_STYLES.dark) {
+    return;
+  }
+
+  const layers = map.getStyle()?.layers || [];
+
+  layers.forEach(function(layer) {
+    if (layer.type === 'background') {
+      map.setPaintProperty(layer.id, 'background-color', '#464c53');
+    }
+
+    if (
+      layer.type === 'line' &&
+      layer['source-layer'] === 'transportation' &&
+      /road|path/i.test(layer.id)
+    ) {
+      map.setPaintProperty(
+        layer.id,
+        'line-color',
+        DARK_ROAD_COLOR
+      );
+    }
+
+    if (
+      layer.type === 'fill' &&
+      layer['source-layer'] === 'building'
+    ) {
+      map.setPaintProperty(layer.id, 'fill-color', '#3a639c');
+      map.setPaintProperty(layer.id, 'fill-outline-color', '#365279');
+    }
+
+    if (
+      layer.type === 'fill' &&
+      layer['source-layer'] === 'water'
+    ) {
+      map.setPaintProperty(layer.id, 'fill-color', '#050b13');
+    }
+
+    if (
+      layer.type === 'line' &&
+      layer['source-layer'] === 'waterway'
+    ) {
+      map.setPaintProperty(layer.id, 'line-color', '#0a1421');
+    }
+
+    if (
+      layer.type === 'fill' &&
+      layer['source-layer'] === 'landuse'
+    ) {
+      map.setPaintProperty(layer.id, 'fill-color', '#172231');
+    }
+
+    if (
+      layer.type === 'fill' &&
+      layer['source-layer'] === 'landcover'
+    ) {
+      map.setPaintProperty(layer.id, 'fill-color', [
+        'match',
+        ['get', 'class'],
+        'wood', '#14251f',
+        'grass', '#182b25',
+        '#182332'
+      ]);
+    }
+
+    if (
+      layer.id === 'Road labels' &&
+      layer.type === 'symbol'
+    ) {
+      map.setPaintProperty(layer.id, 'text-color', '#ffffff');
+      map.setPaintProperty(layer.id, 'text-halo-color', '#080808');
+      map.setPaintProperty(layer.id, 'text-halo-width', 1.5);
+    }
+
+    if (
+      (layer.id === 'Place labels' || layer.id === 'City labels') &&
+      layer.type === 'symbol'
+    ) {
+      map.setPaintProperty(
+        layer.id,
+        'text-color',
+        layer.id === 'City labels' ? '#f7f9fc' : '#1c5297'
+      );
+      map.setPaintProperty(layer.id, 'text-halo-color', '#289ee7');
+      map.setPaintProperty(layer.id, 'text-halo-width', 1.75);
+    }
+
+  });
+}
+
+map.on('style.load', applyDarkMapColors);
+
+
+// OpenFreeMap надає окремі стилі для світлої та темної теми.
 
 
 // =========================================================
@@ -89,6 +204,14 @@ function applyTheme(theme) {
 
   document.documentElement.dataset.theme =
     safeTheme;
+
+  const nextMapStyle =
+    MAP_STYLES[safeTheme];
+
+  if (activeMapStyle !== nextMapStyle) {
+    activeMapStyle = nextMapStyle;
+    map.setStyle(activeMapStyle);
+  }
 
   localStorage.setItem(
     'motoTheme',
@@ -816,7 +939,7 @@ function openModal() {
 
 
     date.min =
-      `$${day}-${month}-{year}`;
+      `${year}-${month}-${day}`;
 
   }
 
@@ -914,10 +1037,10 @@ map.on(
 
 
     const lat =
-      event.latlng.lat;
+      event.lngLat.lat;
 
     const lng =
-      event.latlng.lng;
+      event.lngLat.lng;
 
 
     setMeetingLocation(
@@ -1116,10 +1239,10 @@ function selectAddressResult(
   );
 
 
-  map.setView(
-    [lat, lng],
-    16
-  );
+  map.flyTo({
+    center: [lng, lat],
+    zoom: 16
+  });
 
 
   meetingMarker.openPopup();
@@ -2157,10 +2280,10 @@ function openRideOnMap(id) {
   showMap();
 
 
-  map.setView(
-    [ride.lat, ride.lng],
-    16
-  );
+  map.flyTo({
+    center: [ride.lng, ride.lat],
+    zoom: 16
+  });
 
 
   const marker =
@@ -2168,7 +2291,7 @@ function openRideOnMap(id) {
       function(item) {
 
         const position =
-          item.getLatLng();
+          item.getLngLat();
 
         return (
           Math.abs(position.lat - ride.lat) < 0.000001 &&

@@ -111,25 +111,7 @@ button {
 }
 
 
-html[data-theme="dark"] .leaflet-tile-pane {
-  filter:
-    brightness(.72)
-    contrast(.92)
-    saturate(.72)
-}
-
-
-html[data-theme="light"] .leaflet-tile-pane {
-  filter: none;
-}
-
-
-.leaflet-control-zoom {
-  display: none;
-}
-
-
-.leaflet-control-attribution {
+.maplibregl-ctrl-attrib {
   background: rgba(5,16,21,.78) !important;
   color: #71858c !important;
 
@@ -141,7 +123,7 @@ html[data-theme="light"] .leaflet-tile-pane {
 }
 
 
-.leaflet-control-attribution a {
+.maplibregl-ctrl-attrib a {
   color: #8da0a7 !important;
 }
 
@@ -3196,29 +3178,6 @@ html[data-theme="dark"] .profile-fullscreen {
 .theme-toggle:focus-visible {
   outline: 2px solid #00c8bd;
   outline-offset: 2px;
-}
-/* =========================================================
-   ВЕРХНЯЯ ПАНЕЛЬ — МИНИМАЛИСТИЧНЫЕ ИКОНКИ
-   ========================================================= */
-
-/* Пошук без окантовки */
-.search-button {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Перемикач теми без окантовки */
-.theme-toggle {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Без підсвічування фону при наведенні */
-.search-button:hover,
-.theme-toggle:hover {
-  background: transparent !important;
 }
 /* =========================================================
    MOTO MAPS — ИКОНКИ ВЕРХНЕЙ ПАНЕЛИ БЕЗ ОКАНТОВКИ
