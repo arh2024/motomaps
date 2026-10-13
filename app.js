@@ -50,20 +50,27 @@ const map = new maplibregl.Map({
 const DARK_ROAD_COLOR = [
   'match',
   ['get', 'class'],
-  'motorway', '#547ab1',
-  'motorway_link', '#758eaf',
-  'trunk', '#6d86a8',
-  'primary', '#5f7697',
-  'secondary', '#506783',
-  'tertiary', '#435873',
-  'minor', '#394d65',
-  'service', '#304258',
-  'track', '#354a61',
-  'path', '#30445b',
-  'cycleway', '#3b526d',
-  'pedestrian', '#3b526d',
-  '#3d526c'
+  'motorway', '#d0d0d0',
+  'motorway_link', '#c3c3c3',
+  'trunk', '#b8b8b8',
+  'primary', '#adadad',
+  'secondary', '#999999',
+  'tertiary', '#858585',
+  'minor', '#737373',
+  'service', '#626262',
+  'track', '#707070',
+  'path', '#686868',
+  'cycleway', '#808080',
+  'pedestrian', '#8a8a8a',
+  '#777777'
 ];
+
+// Кольори тексту карти — змінюй HEX-коди тут.
+const DARK_ROAD_LABEL_COLOR = '#f2f2f2';
+const DARK_ROAD_LABEL_HALO_COLOR = '#171717';
+const DARK_CITY_LABEL_COLOR = '#f5f5f5';
+const DARK_PLACE_LABEL_COLOR = '#d0d0d0';
+const DARK_PLACE_LABEL_HALO_COLOR = '#181818';
 
 function applyDarkMapColors() {
   if (activeMapStyle !== MAP_STYLES.dark) {
@@ -74,7 +81,7 @@ function applyDarkMapColors() {
 
   layers.forEach(function(layer) {
     if (layer.type === 'background') {
-      map.setPaintProperty(layer.id, 'background-color', '#464c53');
+      map.setPaintProperty(layer.id, 'background-color', '#181818');
     }
 
     if (
@@ -93,29 +100,29 @@ function applyDarkMapColors() {
       layer.type === 'fill' &&
       layer['source-layer'] === 'building'
     ) {
-      map.setPaintProperty(layer.id, 'fill-color', '#3a639c');
-      map.setPaintProperty(layer.id, 'fill-outline-color', '#365279');
+      map.setPaintProperty(layer.id, 'fill-color', '#383838');
+      map.setPaintProperty(layer.id, 'fill-outline-color', '#505050');
     }
 
     if (
       layer.type === 'fill' &&
       layer['source-layer'] === 'water'
     ) {
-      map.setPaintProperty(layer.id, 'fill-color', '#050b13');
+      map.setPaintProperty(layer.id, 'fill-color', '#070707');
     }
 
     if (
       layer.type === 'line' &&
       layer['source-layer'] === 'waterway'
     ) {
-      map.setPaintProperty(layer.id, 'line-color', '#0a1421');
+      map.setPaintProperty(layer.id, 'line-color', '#0d0d0d');
     }
 
     if (
       layer.type === 'fill' &&
       layer['source-layer'] === 'landuse'
     ) {
-      map.setPaintProperty(layer.id, 'fill-color', '#172231');
+      map.setPaintProperty(layer.id, 'fill-color', '#222222');
     }
 
     if (
@@ -125,9 +132,9 @@ function applyDarkMapColors() {
       map.setPaintProperty(layer.id, 'fill-color', [
         'match',
         ['get', 'class'],
-        'wood', '#14251f',
-        'grass', '#182b25',
-        '#182332'
+        'wood', '#1d1d1d',
+        'grass', '#252525',
+        '#202020'
       ]);
     }
 
@@ -135,8 +142,16 @@ function applyDarkMapColors() {
       layer.id === 'Road labels' &&
       layer.type === 'symbol'
     ) {
-      map.setPaintProperty(layer.id, 'text-color', '#ffffff');
-      map.setPaintProperty(layer.id, 'text-halo-color', '#080808');
+      map.setPaintProperty(
+        layer.id,
+        'text-color',
+        DARK_ROAD_LABEL_COLOR
+      );
+      map.setPaintProperty(
+        layer.id,
+        'text-halo-color',
+        DARK_ROAD_LABEL_HALO_COLOR
+      );
       map.setPaintProperty(layer.id, 'text-halo-width', 1.5);
     }
 
@@ -147,9 +162,15 @@ function applyDarkMapColors() {
       map.setPaintProperty(
         layer.id,
         'text-color',
-        layer.id === 'City labels' ? '#f7f9fc' : '#1c5297'
+        layer.id === 'City labels'
+          ? DARK_CITY_LABEL_COLOR
+          : DARK_PLACE_LABEL_COLOR
       );
-      map.setPaintProperty(layer.id, 'text-halo-color', '#289ee7');
+      map.setPaintProperty(
+        layer.id,
+        'text-halo-color',
+        DARK_PLACE_LABEL_HALO_COLOR
+      );
       map.setPaintProperty(layer.id, 'text-halo-width', 1.75);
     }
 
