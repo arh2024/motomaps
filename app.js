@@ -208,15 +208,30 @@ let currentRidersRideId = null;
 // THEME
 // =========================================================
 
-function getSavedTheme() {
+const systemThemeQuery = window.matchMedia
+  ? window.matchMedia('(prefers-color-scheme: dark)')
+  : null;
 
-  return localStorage.getItem('motoTheme') === 'light'
-    ? 'light'
-    : 'dark';
+function getThemeMode() {
+  const savedMode = localStorage.getItem('motoTheme');
+  return ['auto', 'light', 'dark'].includes(savedMode)
+    ? savedMode
+    : 'auto';
+}
+
+function getSystemTheme() {
+  return systemThemeQuery && systemThemeQuery.matches
+    ? 'dark'
+    : 'light';
+}
+
+function getSavedTheme() {
+  const mode = getThemeMode();
+  return mode === 'auto' ? getSystemTheme() : mode;
 }
 
 
-function applyTheme(theme) {
+function applyTheme(theme, savePreference = true) {
 
   const safeTheme =
     theme === 'light'
@@ -234,54 +249,36 @@ function applyTheme(theme) {
     map.setStyle(activeMapStyle);
   }
 
-  localStorage.setItem(
-    'motoTheme',
-    safeTheme
-  );
+  if (savePreference) {
+    localStorage.setItem('motoTheme', safeTheme);
+  }
   const themeToggleIcon =
   document.getElementById('themeToggleIcon');
 
 if (themeToggleIcon) {
-  themeToggleIcon.innerHTML =
-    safeTheme === 'dark'
-      ? `
-        <svg
-          viewBox="0 0 24 24"
-          width="22"
-          height="22"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="4"></circle>
-          <path d="M12 2v2"></path>
-          <path d="M12 20v2"></path>
-          <path d="m4.93 4.93 1.42 1.42"></path>
-          <path d="m17.65 17.65 1.42 1.42"></path>
-          <path d="M2 12h2"></path>
-          <path d="M20 12h2"></path>
-          <path d="m4.93 19.07 1.42-1.42"></path>
-          <path d="m17.65 6.35 1.42-1.42"></path>
-        </svg>
-      `
-      : `
-        <svg
-          viewBox="0 0 24 24"
-          width="22"
-          height="22"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.7"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"></path>
-        </svg>
-      `;
+  themeToggleIcon.innerHTML = `
+    <svg
+      viewBox="0 0 24 24"
+      width="26"
+      height="26"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M10.1 2.4h3.8v3.2h-3.8z"></path>
+      <circle cx="12" cy="13" r="5.3"></circle>
+      <path d="M12 20.1v2.1"></path>
+      <path d="m5.2 6.2 1.6 1.6"></path>
+      <path d="m17.2 17.2 1.6 1.6"></path>
+      <path d="M2.5 12.8h2.2"></path>
+      <path d="M19.3 12.8h2.2"></path>
+      <path d="m5.2 19 1.6-1.6"></path>
+      <path d="m17.2 8 1.6-1.6"></path>
+    </svg>
+  `;
 }
 
   const toggle =
@@ -318,6 +315,34 @@ function toggleTheme() {
 
   }
 
+}
+
+function setThemeMode(mode) {
+  const safeMode = ['auto', 'light', 'dark'].includes(mode)
+    ? mode
+    : 'auto';
+
+  localStorage.setItem('motoTheme', safeMode);
+  applyTheme(safeMode === 'auto' ? getSystemTheme() : safeMode, false);
+
+  const label = document.getElementById('themeLabel');
+  if (label) {
+    label.textContent = safeMode === 'auto'
+      ? `Автоматично (${getSavedTheme() === 'dark' ? 'темна' : 'світла'})`
+      : safeMode === 'light' ? 'Світла' : 'Темна';
+  }
+}
+
+if (systemThemeQuery) {
+  systemThemeQuery.addEventListener('change', function() {
+    if (getThemeMode() === 'auto') {
+      applyTheme(getSystemTheme(), false);
+      const label = document.getElementById('themeLabel');
+      if (label) {
+        label.textContent = `Автоматично (${getSavedTheme() === 'dark' ? 'темна' : 'світла'})`;
+      }
+    }
+  });
 }
 
 
@@ -1432,6 +1457,19 @@ async function updateNotificationsBadge() {
 
   const count =
     await getUnreadRides();
+
+  const button = document.getElementById('notificationsButton');
+  const hasUnread = count > 0;
+
+  if (button) {
+    button.classList.toggle('has-unread', hasUnread);
+    button.setAttribute(
+      'aria-label',
+      hasUnread
+        ? `Сповіщення, нових: ${count}`
+        : 'Сповіщення'
+    );
+  }
 
   badge.textContent =
     count;
@@ -2558,6 +2596,54 @@ async function showProfile() {
 // RENDER PROFILE
 // =========================================================
 
+function setHeaderAvatar(avatarUrl) {
+  const image = document.getElementById('headerAvatarImage');
+  const fallback = document.getElementById('headerAvatarFallback');
+  const avatar = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
+
+  if (image) {
+    if (avatar) {
+      image.src = avatar;
+      image.hidden = false;
+    } else {
+      image.removeAttribute('src');
+      image.hidden = true;
+    }
+  }
+
+  if (fallback) {
+    fallback.hidden = Boolean(avatar);
+  }
+}
+
+async function updateHeaderAvatar() {
+  if (!supabaseClient) {
+    setHeaderAvatar('');
+    return;
+  }
+
+  const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
+
+  if (sessionError || !sessionData.session) {
+    setHeaderAvatar('');
+    return;
+  }
+
+  const { data: profileData, error: profileError } = await supabaseClient
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', sessionData.session.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error('Помилка завантаження аватара:', profileError);
+    return;
+  }
+
+  setHeaderAvatar(profileData?.avatar_url || '');
+}
+
 async function renderProfile() {
 
   const element =
@@ -2627,39 +2713,7 @@ const nickname =
 const avatar =
   profileData.avatar_url ||
   '';
-
-const headerAvatarImage =
-  document.getElementById(
-    'headerAvatarImage'
-  );
-
-const headerAvatarFallback =
-  document.getElementById(
-    'headerAvatarFallback'
-  );
-
-if (avatar) {
-
-  if (headerAvatarImage) {
-    headerAvatarImage.src = avatar;
-    headerAvatarImage.hidden = false;
-  }
-
-  if (headerAvatarFallback) {
-    headerAvatarFallback.hidden = true;
-  }
-
-} else {
-
-  if (headerAvatarImage) {
-    headerAvatarImage.hidden = true;
-  }
-
-  if (headerAvatarFallback) {
-    headerAvatarFallback.hidden = false;
-  }
-
-}
+setHeaderAvatar(avatar);
   element.innerHTML = `
 
     <div class="profile-fullscreen">
@@ -3456,8 +3510,8 @@ function showSettings() {
     'block';
 
 
-  const theme =
-    getSavedTheme();
+  const theme = getSavedTheme();
+  const themeMode = getThemeMode();
 
 
   settings.innerHTML = `
@@ -3490,24 +3544,23 @@ function showSettings() {
           </strong>
 
           <span id="themeLabel">
-            ${theme === 'light' ? 'Світла' : 'Темна'}
+            ${themeMode === 'auto'
+              ? `Автоматично (${theme === 'dark' ? 'темна' : 'світла'})`
+              : theme === 'light' ? 'Світла' : 'Темна'}
           </span>
 
         </div>
 
 
-        <label class="theme-switch">
-
-          <input
-            id="themeToggle"
-            type="checkbox"
-            ${theme === 'light' ? 'checked' : ''}
-            onchange="toggleTheme()"
-          >
-
-          <span class="theme-slider"></span>
-
-        </label>
+        <select
+          class="theme-mode-select"
+          aria-label="Режим теми"
+          onchange="setThemeMode(this.value)"
+        >
+          <option value="auto" ${themeMode === 'auto' ? 'selected' : ''}>Автоматично</option>
+          <option value="light" ${themeMode === 'light' ? 'selected' : ''}>Світла</option>
+          <option value="dark" ${themeMode === 'dark' ? 'selected' : ''}>Темна</option>
+        </select>
 
       </div>
 
@@ -3914,6 +3967,8 @@ async function loginUser() {
         'Вхід виконано.',
         'success'
       );
+
+      await updateHeaderAvatar();
 
 
       setTimeout(
@@ -4447,11 +4502,12 @@ document.addEventListener(
   function() {
 
     applyTheme(
-      getSavedTheme()
+      getSavedTheme(),
+      false
     );
 
 
-   // updateHeaderAvatar(); 
+    updateHeaderAvatar();
 
 
     renderRideMarkers();
@@ -4569,13 +4625,15 @@ document.addEventListener(
             event
           );
 
-          if (
-            session &&
-            currentScreen === 'map'
+          if (!session || event === 'SIGNED_OUT') {
+            setHeaderAvatar('');
+          } else if (
+            event === 'SIGNED_IN' ||
+            event === 'INITIAL_SESSION' ||
+            event === 'USER_UPDATED'
           ) {
-
-            // updateHeaderAvatar();
-
+            // Schedule after the auth callback so Supabase can release its lock.
+            setTimeout(updateHeaderAvatar, 0);
           }
 
         }

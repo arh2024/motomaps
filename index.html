@@ -32,58 +32,15 @@
   <header id="mapHeader" class="top-header">
 
     <div class="brand">
-
-      <div class="brand-icon">
-
-        <img
-          class="brand-logo-image"
-          src="./img/motomaps-logo.png"
-          alt="Moto Maps"
-          onerror="this.style.display='none'"
-        >
-
-        <span class="brand-fallback">🏍️</span>
-
-      </div>
-
-      <div class="brand-text">
-
-        <div class="logo">
-          Moto Maps
-        </div>
-
-        <div class="tagline">
-          Люди. Маршрути. Пригоди.
-        </div>
-
-      </div>
-
+      <img
+        class="brand-full-logo"
+        src="./img/moto-maps-wordmark.png"
+        alt="Moto Maps"
+      >
     </div>
 
 
 <div class="header-actions">
-
-  <!-- Пошук -->
-<button
-  class="search-button"
-  type="button"
-  aria-label="Пошук"
-  title="Пошук"
->
-  <svg
-    class="search-icon"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.2"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="10.8" cy="10.8" r="6.8"></circle>
-    <path d="m16 16 4.2 4.2"></path>
-  </svg>
-</button>
 
   <!-- Перемикач світлої / темної теми -->
 <button
@@ -145,7 +102,12 @@
     class="header-avatar-fallback"
     aria-hidden="true"
   >
-    👤
+    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <path d="M24 4C13.5 4 6 12.5 6 24v7c0 2 1.6 3.5 3.6 3.5h28.8c2 0 3.6-1.5 3.6-3.5v-7C42 12.5 34.5 4 24 4Z" />
+      <path d="M9 21c3.5-3.2 26.5-3.2 30 0v7c0 4-3 7-7 7H16c-4 0-7-3-7-7v-7Z" />
+      <path d="M12 21c4-2 20-2 24 0M16 35l2 6h12l2-6M21 41h6" />
+      <path d="m10 10 3 3M38 10l-3 3" />
+    </svg>
   </span>
 </button>
 

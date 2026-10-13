@@ -294,6 +294,27 @@ html[data-theme="light"] .top-header {
   object-fit: cover;
 }
 
+.header-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+}
+
+.header-avatar-fallback[hidden] {
+  display: none !important;
+}
+
+.header-avatar-fallback svg {
+  display: block;
+  width: 30px;
+  height: 30px;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 
 /* =========================================================
    ПОШУК
@@ -1046,6 +1067,23 @@ html[data-theme="light"] .bottom-nav {
 }
 
 
+.theme-mode-select {
+  min-height: 40px;
+  padding: 0 30px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
+
+.theme-mode-select:focus-visible {
+  outline: 2px solid var(--turquoise);
+  outline-offset: 2px;
+}
+
+
 .theme-switch {
   position: relative;
 
@@ -1455,49 +1493,6 @@ html[data-theme="light"] .bottom-nav {
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
-}
-
-/* =========================================================
-   SEARCH BUTTON
-   ========================================================= */
-
-.search-button {
-  width: 44px;
-  height: 42px;
-
-  padding: 0;
-
-  border: 1px solid var(--border);
-  border-radius: 50%;
-
-  background: var(--panel);
-  color: var(--text);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-  flex-shrink: 0;
-
-  transition:
-    background .2s ease,
-    color .2s ease,
-    transform .15s ease;
-}
-
-.search-button .search-icon {
-  width: 24px;
-  height: 24px;
-
-  display: block;
-
-  flex-shrink: 0;
-
-  transform: translateX(10px);
-}
-.search-button:active {
-  transform: scale(.92);
 }
 
 /* =========================================================
@@ -3183,8 +3178,6 @@ html[data-theme="dark"] .profile-fullscreen {
    MOTO MAPS — ИКОНКИ ВЕРХНЕЙ ПАНЕЛИ БЕЗ ОКАНТОВКИ
    ========================================================= */
 
-.header-actions .search-button,
-.header-actions .theme-toggle,
 .header-actions #notificationsButton,
 .header-actions #headerAvatar {
   background: transparent !important;
@@ -3194,10 +3187,264 @@ html[data-theme="dark"] .profile-fullscreen {
 }
 
 /* Убираем фон при наведении */
-.header-actions .search-button:hover,
-.header-actions .theme-toggle:hover,
 .header-actions #notificationsButton:hover,
 .header-actions #headerAvatar:hover {
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* Кнопка теми: темна без підсвічування, синя підсвітка у темному режимі. */
+.header-actions .theme-toggle {
+  width: 40px;
+  height: 40px;
+  margin-right: -4px;
+  border: 1px solid transparent !important;
+  border-radius: 50%;
+  background: transparent !important;
+  color: #111820;
+  box-shadow: none !important;
+  transition: color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+.header-actions .theme-toggle:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .header-actions .theme-toggle {
+  border-color: #18d9dc !important;
+  background: #101f22 !important;
+  color: #18d9dc;
+  box-shadow:
+    inset 0 0 8px rgba(24, 217, 220, .28),
+    0 0 9px rgba(24, 217, 220, .42) !important;
+}
+
+[data-theme="dark"] .header-actions .theme-toggle:hover {
+  background: #13282b !important;
+  box-shadow:
+    inset 0 0 9px rgba(24, 217, 220, .38),
+    0 0 12px rgba(24, 217, 220, .52) !important;
+}
+
+/* Дзвіночок і лічильник сповіщень у стилі зразка. */
+.header-actions #notificationsButton {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #53636d !important;
+  border-radius: 50%;
+  background: transparent !important;
+  color: var(--text);
+  transition: color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+[data-theme="dark"] .header-actions #notificationsButton {
+  border-color: #f2f5f7 !important;
+  color: #f2f5f7;
+}
+
+.header-actions #notificationsButton.has-unread {
+  border-color: #18d9dc !important;
+  color: #18d9dc;
+  box-shadow: 0 0 9px rgba(24, 217, 220, .38) !important;
+}
+
+[data-theme="dark"] .header-actions #notificationsButton.has-unread {
+  border-color: #18d9dc !important;
+  color: #18d9dc;
+  box-shadow: 0 0 10px rgba(24, 217, 220, .48) !important;
+}
+
+[data-theme="light"] .header-actions #notificationsButton {
+  border-color: transparent !important;
+  color: #000000;
+  box-shadow: none !important;
+}
+
+[data-theme="light"] .header-actions #notificationsButton.has-unread {
+  border-color: transparent !important;
+  color: #000000;
+  box-shadow: none !important;
+}
+
+/* Верхня панель: картка форми C, логотип-капсула форми B. */
+.top-header {
+  top: 10px;
+  left: clamp(10px, 5vw, 76px);
+  right: clamp(10px, 5vw, 76px);
+  height: 68px;
+  display: block;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, .72);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: 0 10px 32px rgba(18, 35, 45, .16);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html[data-theme="dark"] .top-header {
+  border-color: rgba(255, 255, 255, .1);
+  background: rgba(5, 17, 22, .9);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .34);
+}
+
+html[data-theme="light"] .top-header {
+  border-color: rgba(255, 255, 255, .82);
+  background: rgba(255, 255, 255, .88);
+}
+
+.brand {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: calc(100% - 190px);
+  flex: 0 0 auto;
+  min-width: 0;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border: 2px solid #18d9dc;
+  border-radius: 999px;
+  background: #07131b;
+  box-shadow: 0 0 15px rgba(24, 217, 220, .18);
+}
+
+.brand-full-logo {
+  display: block;
+  width: clamp(180px, 22vw, 250px);
+  max-width: 100%;
+  max-height: 50px;
+  height: auto;
+  object-fit: contain;
+}
+
+html[data-theme="dark"] .brand-full-logo {
+  filter: invert(1);
+}
+
+html[data-theme="light"] .brand {
+  background: #ffffff;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand-logo-image {
+  border-radius: 50%;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 31px;
+  flex: 0 0 1px;
+  background: rgba(24, 217, 220, .75);
+}
+
+.brand-text {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.brand-text .logo {
+  color: #f7fbff;
+  font-size: clamp(14px, 1.65vw, 23px);
+  font-weight: 800;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+}
+
+.brand-text .tagline {
+  display: none;
+}
+
+.header-actions {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .top-header {
+    top: 8px;
+    left: 9px;
+    right: 9px;
+    height: 58px;
+    padding: 7px 9px;
+    border-radius: 22px;
+  }
+
+  .brand {
+    left: 10px;
+    max-width: calc(100% - 145px);
+    height: 46px;
+    padding: 2px 7px;
+    border-width: 1.5px;
+  }
+
+  .brand-full-logo {
+    width: clamp(145px, 48vw, 205px);
+    max-height: 40px;
+  }
+
+  .header-actions {
+    right: 8px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
+  }
+
+  .brand-divider {
+    height: 26px;
+  }
+
+  .brand-text .logo {
+    font-size: clamp(12px, 3.5vw, 16px);
+    letter-spacing: .3px;
+  }
+}
+
+.header-actions #notificationsButton .notification-icon {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.header-actions #notificationsButton .notifications-badge {
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 50%;
+  background: #18d9dc;
+  color: #061116;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.header-actions #notificationsButton .notifications-badge[hidden] {
+  display: none;
 }
