@@ -177,7 +177,10 @@ function applyDarkMapColors() {
   });
 }
 
-map.on('style.load', applyDarkMapColors);
+map.on('style.load', function() {
+  applyDarkMapColors();
+  addActiveRouteLayer();
+});
 
 
 // OpenFreeMap надає окремі стилі для світлої та темної теми.
@@ -188,6 +191,16 @@ map.on('style.load', applyDarkMapColors);
 // =========================================================
 
 let myMarker = null;
+
+let activeRouteGeoJSON = null;
+
+let activeRouteDestination = null;
+
+let activeRouteOrigin = null;
+
+let activeRouteName = '';
+
+let routeRequestSerial = 0;
 
 let meetingMarker = null;
 
@@ -430,6 +443,253 @@ function findMe() {
   );
 }
 
+function getCurrentCoordinates() {
+  return new Promise(function(resolve, reject) {
+    if (!navigator.geolocation) {
+      reject(new Error('Браузер не підтримує геолокацію.'));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      function(error) {
+        const messages = {
+          1: 'Дозвольте доступ до геолокації, щоб побудувати маршрут.',
+          2: 'Не вдалося визначити місцезнаходження.',
+          3: 'GPS не відповів вчасно. Спробуйте ще раз.'
+        };
+        reject(new Error(messages[error.code] || 'Не вдалося отримати координати GPS.'));
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 30000
+      }
+    );
+  });
+}
+
+function setRoutePanel(title, status, distance, duration) {
+  const panel = document.getElementById('routeInfoPanel');
+  if (!panel) return;
+
+  document.getElementById('routeInfoTitle').textContent = title;
+  document.getElementById('routeInfoStatus').textContent = status || '';
+  document.getElementById('routeDistance').textContent = distance || '';
+  document.getElementById('routeDuration').textContent = duration || '';
+  panel.hidden = false;
+  panel.style.display = 'flex';
+}
+
+function formatRouteDistance(meters) {
+  const kilometers = meters / 1000;
+  return kilometers < 10
+    ? `${kilometers.toFixed(1)} км`
+    : `${Math.round(kilometers)} км`;
+}
+
+function formatRouteDuration(seconds) {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return hours
+    ? `${hours} год ${remainingMinutes} хв`
+    : `${minutes} хв`;
+}
+
+function addActiveRouteLayer() {
+  if (!activeRouteGeoJSON || !map.isStyleLoaded()) return;
+
+  if (map.getLayer('active-ride-route')) {
+    map.removeLayer('active-ride-route');
+  }
+  if (map.getSource('active-ride-route')) {
+    map.removeSource('active-ride-route');
+  }
+
+  map.addSource('active-ride-route', {
+    type: 'geojson',
+    data: activeRouteGeoJSON
+  });
+
+  const firstSymbolLayer = map.getStyle().layers.find(function(layer) {
+    return layer.type === 'symbol';
+  });
+
+  const routeLayer = {
+    id: 'active-ride-route',
+    type: 'line',
+    source: 'active-ride-route',
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round'
+    },
+    paint: {
+      'line-color': '#18d9dc',
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'],
+        8, 4,
+        15, 7
+      ],
+      'line-opacity': 0.95
+    }
+  };
+
+  if (firstSymbolLayer) {
+    map.addLayer(routeLayer, firstSymbolLayer.id);
+  } else {
+    map.addLayer(routeLayer);
+  }
+}
+
+function clearRideRoute() {
+  routeRequestSerial += 1;
+  activeRouteGeoJSON = null;
+  activeRouteOrigin = null;
+  activeRouteDestination = null;
+  activeRouteName = '';
+
+  if (map.getLayer('active-ride-route')) {
+    map.removeLayer('active-ride-route');
+  }
+  if (map.getSource('active-ride-route')) {
+    map.removeSource('active-ride-route');
+  }
+
+  const panel = document.getElementById('routeInfoPanel');
+  if (panel) {
+    panel.hidden = true;
+    panel.style.display = 'none';
+  }
+}
+
+async function routeToRide(lat, lng, encodedName) {
+  const destination = { lat: Number(lat), lng: Number(lng) };
+  if (
+    !Number.isFinite(destination.lat) ||
+    !Number.isFinite(destination.lng) ||
+    Math.abs(destination.lat) > 90 ||
+    Math.abs(destination.lng) > 180
+  ) {
+    activeRouteDestination = null;
+    setRoutePanel('Маршрут до мотопоїздки', 'Для цієї поїздки не задано координати точки збору.');
+    return;
+  }
+
+  if (currentScreen !== 'map') {
+    showMap();
+  }
+
+  activeRouteDestination = destination;
+  try {
+    activeRouteName = decodeURIComponent(encodedName || '') || 'точки збору';
+  } catch (error) {
+    activeRouteName = 'точки збору';
+  }
+
+  const requestId = ++routeRequestSerial;
+  activeRouteGeoJSON = null;
+  activeRouteOrigin = null;
+  if (map.getLayer('active-ride-route')) map.removeLayer('active-ride-route');
+  if (map.getSource('active-ride-route')) map.removeSource('active-ride-route');
+  setRoutePanel(`До: ${activeRouteName}`, 'Визначаємо ваше місцезнаходження…');
+
+  try {
+    const origin = await getCurrentCoordinates();
+    if (requestId !== routeRequestSerial) return;
+    activeRouteOrigin = origin;
+
+    if (!myMarker) {
+      const markerElement = document.createElement('div');
+      markerElement.className = 'my-location-marker';
+      markerElement.innerHTML = '<div class="my-location-dot"></div>';
+      myMarker = new maplibregl.Marker({ element: markerElement, anchor: 'center' })
+        .setLngLat([origin.lng, origin.lat])
+        .addTo(map);
+    } else {
+      myMarker.setLngLat([origin.lng, origin.lat]);
+    }
+
+    setRoutePanel(`До: ${activeRouteName}`, 'Будуємо найшвидший маршрут…');
+
+    const routeUrl =
+      'https://router.project-osrm.org/route/v1/driving/' +
+      `${origin.lng},${origin.lat};${destination.lng},${destination.lat}` +
+      '?overview=full&geometries=geojson&steps=false';
+    const response = await fetch(routeUrl);
+    if (!response.ok) throw new Error('Сервіс маршрутів тимчасово недоступний.');
+
+    const result = await response.json();
+    if (requestId !== routeRequestSerial) return;
+    if (result.code !== 'Ok' || !result.routes || !result.routes.length) {
+      throw new Error('Не вдалося знайти автомобільний маршрут до точки збору.');
+    }
+
+    const route = result.routes[0];
+    activeRouteGeoJSON = {
+      type: 'Feature',
+      properties: {},
+      geometry: route.geometry
+    };
+    addActiveRouteLayer();
+
+    const bounds = new maplibregl.LngLatBounds();
+    route.geometry.coordinates.forEach(function(coordinate) {
+      bounds.extend(coordinate);
+    });
+    map.fitBounds(bounds, {
+      padding: { top: 100, right: 70, bottom: 150, left: 50 },
+      maxZoom: 15,
+      duration: 700
+    });
+
+    setRoutePanel(
+      `До: ${activeRouteName}`,
+      'Найшвидший автомобільний маршрут',
+      formatRouteDistance(route.distance),
+      formatRouteDuration(route.duration)
+    );
+  } catch (error) {
+    if (requestId !== routeRequestSerial) return;
+    console.error('Помилка побудови маршруту:', error);
+    setRoutePanel(
+      `До: ${activeRouteName}`,
+      `${error.message} Можна відкрити маршрут у Google Maps.`
+    );
+  }
+}
+
+function openGoogleMapsRoute() {
+  if (!activeRouteDestination) return;
+
+  const params = new URLSearchParams({
+    api: '1',
+    destination: `${activeRouteDestination.lat},${activeRouteDestination.lng}`,
+    travelmode: 'driving',
+    dir_action: 'navigate'
+  });
+
+  if (activeRouteOrigin) {
+    params.set('origin', `${activeRouteOrigin.lat},${activeRouteOrigin.lng}`);
+  }
+
+  window.open(`https://www.google.com/maps/dir/?${params.toString()}`, '_blank', 'noopener');
+}
+
+function startRideNavigation(lat, lng, encodedName, button) {
+  const popup = button && button.closest('.maplibregl-popup');
+  const closeButton = popup && popup.querySelector('.maplibregl-popup-close-button');
+  if (closeButton) closeButton.click();
+
+  routeToRide(lat, lng, encodedName);
+  openGoogleMapsRoute();
+}
+
 // =========================================================
 // NAVIGATION
 // =========================================================
@@ -444,7 +704,8 @@ function hideMapInterface() {
     'weatherButton',
     'mapControls',
     'mapAddButton',
-    'bottomNav'
+    'bottomNav',
+    'routeInfoPanel'
 
   ];
 
@@ -489,7 +750,10 @@ function showMapInterface() {
       'flex',
 
     bottomNav:
-      'grid'
+      'grid',
+
+    routeInfoPanel:
+      activeRouteDestination ? 'flex' : 'none'
 
   };
 
@@ -1840,12 +2104,14 @@ async function loadRideMarkersFromSupabase() {
     }
 
 
-const popup = new maplibregl.Popup({ offset: 25 })
+  const popup = new maplibregl.Popup({ offset: 25 })
   .setHTML(
     `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
     `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
     `🕐 ${escapeHtml(ride.ride_time)}<br><br>` +
-    `<button type="button" onclick="joinRide('${ride.id}')">ПОЇХАТИ</button>`
+    `<button type="button" class="route-popup-button" onclick="routeToRide(${Number(ride.meeting_lat)},${Number(ride.meeting_lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}')">Прокласти маршрут</button><br><br>` +
+    `<button type="button" onclick="joinRide('${ride.id}')">Приєднатися</button><br><br>` +
+    `<button type="button" class="route-popup-button" onclick="startRideNavigation(${Number(ride.meeting_lat)},${Number(ride.meeting_lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}',this)">Поїхали</button>`
   );
 
 const markerElement = document.createElement('div');
@@ -1898,7 +2164,9 @@ const popup = new maplibregl.Popup({ offset: 25 })
     `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
     `📅 ${escapeHtml(formatDate(ride.date))}<br>` +
     `🕐 ${escapeHtml(ride.time)}<br>` +
-    `📍 ${escapeHtml(ride.location)}`
+    `📍 ${escapeHtml(ride.location)}<br><br>` +
+    `<button type="button" class="route-popup-button" onclick="routeToRide(${Number(ride.lat)},${Number(ride.lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}')">Прокласти маршрут</button><br><br>` +
+    `<button type="button" class="route-popup-button" onclick="startRideNavigation(${Number(ride.lat)},${Number(ride.lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}',this)">Поїхали</button>`
   );
 
 const markerElement = document.createElement('div');
@@ -2165,6 +2433,20 @@ async function renderRides(ridesFromSupabase) {
         ? creator.bike
         : 'Не вказано';
 
+    const rideLatitude = Number(ride.meeting_lat);
+    const rideLongitude = Number(ride.meeting_lng);
+    const hasMeetingCoordinates =
+      ride.meeting_lat !== null &&
+      ride.meeting_lat !== undefined &&
+      ride.meeting_lng !== null &&
+      ride.meeting_lng !== undefined &&
+      Number.isFinite(rideLatitude) &&
+      Number.isFinite(rideLongitude) &&
+      Math.abs(rideLatitude) <= 90 &&
+      Math.abs(rideLongitude) <= 180;
+    const encodedRideName = encodeURIComponent(ride.name || 'точки збору')
+      .replace(/'/g, '%27');
+
     // -----------------------------------------------------
     // КАРТКА
     // -----------------------------------------------------
@@ -2259,6 +2541,15 @@ async function renderRides(ridesFromSupabase) {
             onclick="openRideOnMap('${ride.id}')"
           >
             📍 На карті
+          </button>
+
+          <button
+            class="ride-action"
+            type="button"
+            ${hasMeetingCoordinates ? '' : 'disabled'}
+            onclick="routeToRide(${rideLatitude},${rideLongitude},'${encodedRideName}')"
+          >
+            🧭 Маршрут
           </button>
 
         </div>

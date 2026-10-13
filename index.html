@@ -115,6 +115,26 @@
 
   </header>
 
+  <div id="routeInfoPanel" class="route-info-panel" hidden>
+    <button
+      class="route-info-close"
+      type="button"
+      onclick="clearRideRoute()"
+      aria-label="Закрити маршрут"
+    >×</button>
+    <strong id="routeInfoTitle">Маршрут до мотопоїздки</strong>
+    <span id="routeInfoStatus" class="route-info-status"></span>
+    <div class="route-info-stats">
+      <span id="routeDistance"></span>
+      <span id="routeDuration"></span>
+    </div>
+    <small class="route-attribution">Маршрут: OSRM · дані OpenStreetMap</small>
+    <button
+      class="route-google-button"
+      type="button"
+      onclick="openGoogleMapsRoute()"
+    >Відкрити навігацію в Google Maps</button>
+  </div>
 
  
   <!-- =====================================================

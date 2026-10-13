@@ -903,6 +903,11 @@ html[data-theme="light"] .bottom-nav {
   color: var(--turquoise);
 }
 
+.ride-action:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 
 .empty-state {
   padding: 35px 15px;
@@ -3447,4 +3452,78 @@ html[data-theme="light"] .brand {
 
 .header-actions #notificationsButton .notifications-badge[hidden] {
   display: none;
+}
+
+.route-info-panel {
+  position: absolute;
+  z-index: 2060;
+  left: 14px;
+  bottom: calc(var(--nav-height) + 12px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(380px, calc(100vw - 88px));
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.route-info-panel[hidden] {
+  display: none !important;
+}
+
+.route-info-panel strong {
+  padding-right: 28px;
+  font-size: 15px;
+}
+
+.route-info-status {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.route-info-stats {
+  display: flex;
+  gap: 14px;
+  color: var(--turquoise);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.route-attribution {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.route-info-close {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.route-google-button,
+.route-popup-button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--turquoise);
+  color: #061116;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.route-popup-button {
+  margin-top: 6px;
 }
