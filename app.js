@@ -50,44 +50,44 @@ const map = new maplibregl.Map({
 const DARK_ROAD_COLOR = [
   'match',
   ['get', 'class'],
-  'motorway', '#d0d0d0',
-  'motorway_link', '#c3c3c3',
-  'trunk', '#b8b8b8',
-  'primary', '#adadad',
-  'secondary', '#999999',
-  'tertiary', '#858585',
-  'minor', '#737373',
-  'service', '#626262',
-  'track', '#707070',
-  'path', '#686868',
-  'cycleway', '#808080',
-  'pedestrian', '#8a8a8a',
-  '#777777'
+  'motorway', '#e3eaf2',
+  'motorway_link', '#d7e1ec',
+  'trunk', '#cbd7e4',
+  'primary', '#bfcede',
+  'secondary', '#b2c2d3',
+  'tertiary', '#a5b6c9',
+  'minor', '#98abc0',
+  'service', '#899db3',
+  'track', '#91a5bb',
+  'path', '#879bb1',
+  'cycleway', '#a5b8cb',
+  'pedestrian', '#afc0d1',
+  '#9badc1'
 ];
 
 // Кольори тексту карти — змінюй HEX-коди тут.
-const DARK_ROAD_LABEL_COLOR = '#f2f2f2';
-const DARK_ROAD_LABEL_HALO_COLOR = '#171717';
-const DARK_CITY_LABEL_COLOR = '#f5f5f5';
-const DARK_PLACE_LABEL_COLOR = '#d0d0d0';
-const DARK_PLACE_LABEL_HALO_COLOR = '#181818';
+const DARK_ROAD_LABEL_COLOR = '#f2f5f8';
+const DARK_ROAD_LABEL_HALO_COLOR = '#2b3e50';
+const DARK_CITY_LABEL_COLOR = '#f5f7fa';
+const DARK_PLACE_LABEL_COLOR = '#d6e0e9';
+const DARK_PLACE_LABEL_HALO_COLOR = '#2b3e50';
 
 function applyDarkMapColors() {
   if (activeMapStyle !== MAP_STYLES.dark) {
     return;
   }
 
-  const layers = map.getStyle()?.layers || [];
+  const style = map.getStyle();
+  const layers = style && style.layers ? style.layers : [];
 
   layers.forEach(function(layer) {
     if (layer.type === 'background') {
-      map.setPaintProperty(layer.id, 'background-color', '#181818');
+      map.setPaintProperty(layer.id, 'background-color', '#2b3e50');
     }
 
     if (
       layer.type === 'line' &&
-      layer['source-layer'] === 'transportation' &&
-      /road|path/i.test(layer.id)
+      layer['source-layer'] === 'transportation'
     ) {
       map.setPaintProperty(
         layer.id,
@@ -100,29 +100,37 @@ function applyDarkMapColors() {
       layer.type === 'fill' &&
       layer['source-layer'] === 'building'
     ) {
-      map.setPaintProperty(layer.id, 'fill-color', '#383838');
-      map.setPaintProperty(layer.id, 'fill-outline-color', '#505050');
+      map.setPaintProperty(layer.id, 'fill-color', '#3a4d60');
+      map.setPaintProperty(layer.id, 'fill-outline-color', '#4b6075');
     }
 
     if (
       layer.type === 'fill' &&
       layer['source-layer'] === 'water'
     ) {
-      map.setPaintProperty(layer.id, 'fill-color', '#070707');
+      map.setPaintProperty(layer.id, 'fill-color', '#1d3042');
     }
 
     if (
       layer.type === 'line' &&
       layer['source-layer'] === 'waterway'
     ) {
-      map.setPaintProperty(layer.id, 'line-color', '#0d0d0d');
+      map.setPaintProperty(layer.id, 'line-color', '#435a70');
     }
 
     if (
       layer.type === 'fill' &&
       layer['source-layer'] === 'landuse'
     ) {
-      map.setPaintProperty(layer.id, 'fill-color', '#222222');
+      map.setPaintProperty(layer.id, 'fill-color', [
+        'match',
+        ['get', 'class'],
+        'park', '#344b5a',
+        'cemetery', '#334957',
+        'residential', '#304457',
+        'industrial', '#2d4153',
+        '#304457'
+      ]);
     }
 
     if (
@@ -132,9 +140,9 @@ function applyDarkMapColors() {
       map.setPaintProperty(layer.id, 'fill-color', [
         'match',
         ['get', 'class'],
-        'wood', '#1d1d1d',
-        'grass', '#252525',
-        '#202020'
+        'wood', '#344b60',
+        'grass', '#32495c',
+        '#2f4558'
       ]);
     }
 
@@ -182,6 +190,10 @@ map.on('style.load', function() {
   addActiveRouteLayer();
 });
 
+map.on('click', function() {
+  closeRideDetailSheet();
+});
+
 
 // OpenFreeMap надає окремі стилі для світлої та темної теми.
 
@@ -198,8 +210,6 @@ let activeRouteDestination = null;
 
 let activeRouteOrigin = null;
 
-let activeRouteName = '';
-
 let routeRequestSerial = 0;
 
 let meetingMarker = null;
@@ -207,6 +217,7 @@ let meetingMarker = null;
 let meetingLocation = null;
 
 let rideMarkers = [];
+let mapSidebarRides = [];
 
 let currentScreen = 'map';
 
@@ -365,7 +376,7 @@ if (systemThemeQuery) {
 
 function escapeHtml(value) {
 
-  return String(value ?? '')
+  return String(value == null ? '' : value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -474,34 +485,6 @@ function getCurrentCoordinates() {
   });
 }
 
-function setRoutePanel(title, status, distance, duration) {
-  const panel = document.getElementById('routeInfoPanel');
-  if (!panel) return;
-
-  document.getElementById('routeInfoTitle').textContent = title;
-  document.getElementById('routeInfoStatus').textContent = status || '';
-  document.getElementById('routeDistance').textContent = distance || '';
-  document.getElementById('routeDuration').textContent = duration || '';
-  panel.hidden = false;
-  panel.style.display = 'flex';
-}
-
-function formatRouteDistance(meters) {
-  const kilometers = meters / 1000;
-  return kilometers < 10
-    ? `${kilometers.toFixed(1)} км`
-    : `${Math.round(kilometers)} км`;
-}
-
-function formatRouteDuration(seconds) {
-  const minutes = Math.max(1, Math.round(seconds / 60));
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return hours
-    ? `${hours} год ${remainingMinutes} хв`
-    : `${minutes} хв`;
-}
-
 function addActiveRouteLayer() {
   if (!activeRouteGeoJSON || !map.isStyleLoaded()) return;
 
@@ -547,28 +530,7 @@ function addActiveRouteLayer() {
   }
 }
 
-function clearRideRoute() {
-  routeRequestSerial += 1;
-  activeRouteGeoJSON = null;
-  activeRouteOrigin = null;
-  activeRouteDestination = null;
-  activeRouteName = '';
-
-  if (map.getLayer('active-ride-route')) {
-    map.removeLayer('active-ride-route');
-  }
-  if (map.getSource('active-ride-route')) {
-    map.removeSource('active-ride-route');
-  }
-
-  const panel = document.getElementById('routeInfoPanel');
-  if (panel) {
-    panel.hidden = true;
-    panel.style.display = 'none';
-  }
-}
-
-async function routeToRide(lat, lng, encodedName) {
+async function routeToRide(lat, lng) {
   const destination = { lat: Number(lat), lng: Number(lng) };
   if (
     !Number.isFinite(destination.lat) ||
@@ -577,7 +539,7 @@ async function routeToRide(lat, lng, encodedName) {
     Math.abs(destination.lng) > 180
   ) {
     activeRouteDestination = null;
-    setRoutePanel('Маршрут до мотопоїздки', 'Для цієї поїздки не задано координати точки збору.');
+    alert('Для цієї поїздки не задано координати точки збору.');
     return;
   }
 
@@ -586,18 +548,12 @@ async function routeToRide(lat, lng, encodedName) {
   }
 
   activeRouteDestination = destination;
-  try {
-    activeRouteName = decodeURIComponent(encodedName || '') || 'точки збору';
-  } catch (error) {
-    activeRouteName = 'точки збору';
-  }
 
   const requestId = ++routeRequestSerial;
   activeRouteGeoJSON = null;
   activeRouteOrigin = null;
   if (map.getLayer('active-ride-route')) map.removeLayer('active-ride-route');
   if (map.getSource('active-ride-route')) map.removeSource('active-ride-route');
-  setRoutePanel(`До: ${activeRouteName}`, 'Визначаємо ваше місцезнаходження…');
 
   try {
     const origin = await getCurrentCoordinates();
@@ -614,8 +570,6 @@ async function routeToRide(lat, lng, encodedName) {
     } else {
       myMarker.setLngLat([origin.lng, origin.lat]);
     }
-
-    setRoutePanel(`До: ${activeRouteName}`, 'Будуємо найшвидший маршрут…');
 
     const routeUrl =
       'https://router.project-osrm.org/route/v1/driving/' +
@@ -647,20 +601,10 @@ async function routeToRide(lat, lng, encodedName) {
       maxZoom: 15,
       duration: 700
     });
-
-    setRoutePanel(
-      `До: ${activeRouteName}`,
-      'Найшвидший автомобільний маршрут',
-      formatRouteDistance(route.distance),
-      formatRouteDuration(route.duration)
-    );
   } catch (error) {
     if (requestId !== routeRequestSerial) return;
     console.error('Помилка побудови маршруту:', error);
-    setRoutePanel(
-      `До: ${activeRouteName}`,
-      `${error.message} Можна відкрити маршрут у Google Maps.`
-    );
+    alert(`${error.message} Скористайтеся кнопкою G для маршруту в Google Maps.`);
   }
 }
 
@@ -681,31 +625,23 @@ function openGoogleMapsRoute() {
   window.open(`https://www.google.com/maps/dir/?${params.toString()}`, '_blank', 'noopener');
 }
 
-function startRideNavigation(lat, lng, encodedName, button) {
-  const popup = button && button.closest('.maplibregl-popup');
-  const closeButton = popup && popup.querySelector('.maplibregl-popup-close-button');
-  if (closeButton) closeButton.click();
-
-  routeToRide(lat, lng, encodedName);
-  openGoogleMapsRoute();
-}
-
 // =========================================================
 // NAVIGATION
 // =========================================================
 
 function hideMapInterface() {
 
+  closeRideDetailSheet();
+
   const ids = [
 
     'mapHeader',
+    'mapSidebar',
     'mapSearchBox',
     'mapFilters',
     'weatherButton',
     'mapControls',
-    'mapAddButton',
-    'bottomNav',
-    'routeInfoPanel'
+    'mapAddButton'
 
   ];
 
@@ -734,6 +670,9 @@ function showMapInterface() {
     mapHeader:
       'block',
 
+    mapSidebar:
+      'flex',
+
     mapSearchBox:
       'flex',
 
@@ -750,10 +689,7 @@ function showMapInterface() {
       'flex',
 
     bottomNav:
-      'grid',
-
-    routeInfoPanel:
-      activeRouteDestination ? 'flex' : 'none'
+      'grid'
 
   };
 
@@ -813,12 +749,14 @@ function setActiveNav(name) {
     });
 
 
-  const target =
-    document.getElementById(
-      name === 'map'
-        ? 'navMap'
-        : 'navRides'
-    );
+  const navIds = {
+    map: 'navMap',
+    routes: 'navRoutes',
+    create: 'navCreateRide',
+    community: 'navCommunity',
+    profile: 'navProfile'
+  };
+  const target = document.getElementById(navIds[name]);
 
 
   if (target) {
@@ -952,6 +890,7 @@ function showRides() {
 
   // Встановлюємо поточний екран.
   currentScreen = 'rides';
+  setActiveNav('routes');
 
   // Повністю ховаємо інші екрани.
   hideAllScreens();
@@ -971,6 +910,8 @@ function showRides() {
 
   // Показуємо тільки екран мотопоїздок.
   rides.style.display = 'block';
+  const ridesTitle = rides.querySelector('.rides-screen-header h1');
+  if (ridesTitle) ridesTitle.textContent = 'МОТОПОЇЗДКИ';
 
   // Завантажуємо мотопоїздки з Supabase.
   loadRidesFromSupabase()
@@ -1009,6 +950,22 @@ function showRides() {
 
     });
 
+}
+
+// Маршрути та спільнота показують живий перелік відкритих поїздок;
+// вибір поїздки відкриває її точку збору й доступні способи маршруту.
+function showRoutes() {
+  showRides();
+  const title = document.querySelector('#rides .rides-screen-header h1');
+  if (title) title.textContent = 'МАРШРУТИ';
+  setActiveNav('routes');
+}
+
+function showCommunity() {
+  showRides();
+  const title = document.querySelector('#rides .rides-screen-header h1');
+  if (title) title.textContent = 'СПІЛЬНОТА';
+  setActiveNav('community');
 }
 async function joinRide(rideId) {
 
@@ -1202,6 +1159,8 @@ function toggleMapFilter(button) {
 
 function openModal() {
 
+  setActiveNav('create');
+
   const modal =
     document.getElementById(
       'modal'
@@ -1279,6 +1238,14 @@ function closeModal() {
 
   }
 
+  const screenNav = {
+    map: 'map',
+    rides: 'routes',
+    profile: 'profile',
+    settings: 'profile'
+  };
+  setActiveNav(screenNav[currentScreen] || 'map');
+
 }
 
 
@@ -1333,6 +1300,13 @@ function setMeetingLocation(lat, lng, label) {
   meetingMarker.setPopup(popup);
 
   updateLocationStatus();
+}
+
+function chooseLocation() {
+  choosingLocation = true;
+  showMap();
+  closeModal();
+  showSuccessMessage('Натисніть на карті, щоб позначити місце збору.');
 }
 
 // Клік по карті
@@ -1773,12 +1747,6 @@ async function saveRide() {
     ).value;
 
 
-  const people =
-    document.getElementById(
-      'ridePeople'
-    ).value;
-
-
   if (!name) {
 
     alert(
@@ -1935,7 +1903,7 @@ if (profileError) {
           meetingLocation.lng,
 
         max_people:
-          Number(people) || 1,
+          100,
 
         status:
           'open'
@@ -1979,9 +1947,6 @@ if (profileError) {
 
     time:
       savedRide.ride_time,
-
-    people:
-      savedRide.max_people,
 
     location:
       meetingLocation.label,
@@ -2055,10 +2020,92 @@ function clearRideMarkers() {
   rideMarkers = [];
 }
 
+function closeRideDetailSheet() {
+  const sheet = document.getElementById('rideDetailSheet');
+  if (!sheet || sheet.hidden) return;
+
+  sheet.classList.remove('is-open');
+  sheet.setAttribute('aria-hidden', 'true');
+  setTimeout(function() {
+    if (!sheet.classList.contains('is-open')) {
+      sheet.hidden = true;
+    }
+  }, 220);
+}
+
+function showRideDetailSheet(ride) {
+  const sheet = document.getElementById('rideDetailSheet');
+  if (!sheet) return;
+
+  const rideName = ride.name || 'Мотопоїздка';
+  const rideDate = ride.ride_date || ride.date;
+  const rideTime = ride.ride_time || ride.time;
+  const creatorName = ride.creatorName || ride.creator || 'Moto Rider';
+  const latitude = Number(
+    ride.meeting_lat !== undefined && ride.meeting_lat !== null
+      ? ride.meeting_lat
+      : ride.lat
+  );
+  const longitude = Number(
+    ride.meeting_lng !== undefined && ride.meeting_lng !== null
+      ? ride.meeting_lng
+      : ride.lng
+  );
+
+  document.getElementById('rideDetailName').textContent = rideName;
+  document.getElementById('rideDetailCreator').textContent = creatorName;
+  document.getElementById('rideDetailDate').textContent = rideDate ? formatDate(rideDate) : 'Не вказано';
+  document.getElementById('rideDetailTime').textContent = rideTime || 'Не вказано';
+
+  const actions = document.getElementById('rideDetailActions');
+  actions.innerHTML =
+    `<button type="button" class="ride-popup-action ride-popup-join" ${ride.id ? '' : 'disabled'}>` +
+      `<svg class="ride-popup-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>` +
+      `<span>Приєднатися</span>` +
+    `</button>` +
+    `<button type="button" class="ride-popup-action ride-popup-google" title="Прокласти маршрут у Google Maps" aria-label="Прокласти маршрут у Google Maps">` +
+      `<span class="ride-provider-mark ride-provider-google" aria-hidden="true">G</span>` +
+    `</button>` +
+    `<button type="button" class="ride-popup-action ride-popup-moto" title="Прокласти маршрут у Moto Maps" aria-label="Прокласти маршрут у Moto Maps">` +
+      `<span class="ride-provider-mark ride-provider-moto" aria-hidden="true">MM</span>` +
+    `</button>`;
+
+  const joinButton = actions.querySelector('.ride-popup-join');
+  if (joinButton && ride.id) {
+    joinButton.addEventListener('click', function() {
+      joinRide(ride.id);
+    });
+  }
+
+  const googleButton = actions.querySelector('.ride-popup-google');
+  if (googleButton) {
+    googleButton.addEventListener('click', function() {
+      closeRideDetailSheet();
+      routeToRide(latitude, longitude);
+      openGoogleMapsRoute();
+    });
+  }
+
+  const motoButton = actions.querySelector('.ride-popup-moto');
+  if (motoButton) {
+    motoButton.addEventListener('click', function() {
+      closeRideDetailSheet();
+      routeToRide(latitude, longitude);
+    });
+  }
+
+  sheet.hidden = false;
+  sheet.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(function() {
+    sheet.classList.add('is-open');
+  });
+}
+
 async function loadRideMarkersFromSupabase() {
 
   if (!supabaseClient) {
-
+    mapSidebarRides = [];
+    renderMapSidebarRides();
     return;
 
   }
@@ -2084,15 +2131,56 @@ async function loadRideMarkersFromSupabase() {
       error
     );
 
+    const container = document.getElementById('mapSidebarRides');
+    if (container) container.textContent = 'Не вдалося завантажити поїздки. Перевір підключення та спробуй ще раз.';
+
     return;
 
   }
 
 
+  const rides = data || [];
+  const creatorIds = Array.from(new Set(
+    rides
+      .map(function(ride) { return ride.creator_id; })
+      .filter(Boolean)
+  ));
+  const creatorNames = {};
+
+  if (creatorIds.length) {
+    const { data: profiles, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('id, nickname')
+      .in('id', creatorIds);
+
+    if (profileError) {
+      console.error('Помилка завантаження авторів поїздок:', profileError);
+    } else {
+      (profiles || []).forEach(function(profile) {
+        creatorNames[profile.id] = profile.nickname || 'Moto Rider';
+      });
+    }
+  }
+
+
+  mapSidebarRides = rides.filter(function(ride) {
+    const lat = Number(ride.meeting_lat);
+    const lng = Number(ride.meeting_lng);
+    return ride.meeting_lat !== null && ride.meeting_lat !== undefined &&
+      ride.meeting_lng !== null && ride.meeting_lng !== undefined &&
+      Number.isFinite(lat) && Number.isFinite(lng) &&
+      Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+  }).map(function(ride) {
+    ride.creatorName = creatorNames[ride.creator_id] || 'Moto Rider';
+    return ride;
+  });
+  renderMapSidebarRides();
+
+
   clearRideMarkers();
 
 
-  (data || []).forEach(function(ride) {
+  rides.forEach(function(ride) {
 
     if (
       typeof ride.meeting_lat !== 'number' ||
@@ -2104,15 +2192,7 @@ async function loadRideMarkersFromSupabase() {
     }
 
 
-  const popup = new maplibregl.Popup({ offset: 25 })
-  .setHTML(
-    `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
-    `📅 ${escapeHtml(formatDate(ride.ride_date))}<br>` +
-    `🕐 ${escapeHtml(ride.ride_time)}<br><br>` +
-    `<button type="button" class="route-popup-button" onclick="routeToRide(${Number(ride.meeting_lat)},${Number(ride.meeting_lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}')">Прокласти маршрут</button><br><br>` +
-    `<button type="button" onclick="joinRide('${ride.id}')">Приєднатися</button><br><br>` +
-    `<button type="button" class="route-popup-button" onclick="startRideNavigation(${Number(ride.meeting_lat)},${Number(ride.meeting_lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}',this)">Поїхали</button>`
-  );
+  ride.creatorName = creatorNames[ride.creator_id] || 'Moto Rider';
 
 const markerElement = document.createElement('div');
 markerElement.textContent = '🏍️';
@@ -2122,13 +2202,17 @@ markerElement.style.cursor = 'pointer';
 const marker = new maplibregl.Marker({
   element: markerElement,
   anchor: 'bottom'
-})
+  })
   .setLngLat([
     Number(ride.meeting_lng),
     Number(ride.meeting_lat)
   ])
-  .setPopup(popup)
   .addTo(map);
+
+marker.getElement().addEventListener('click', function(event) {
+  event.stopPropagation();
+  showRideDetailSheet(ride);
+});
 
 
     rideMarkers.push(
@@ -2137,6 +2221,55 @@ const marker = new maplibregl.Marker({
 
   });
 
+}
+
+function renderMapSidebarRides() {
+  const container = document.getElementById('mapSidebarRides');
+  if (!container) return;
+
+  if (!mapSidebarRides.length) {
+    container.innerHTML = '<div class="sidebar-empty-state">Поки немає відкритих поїздок поруч.<br>Створи першу та запроси інших райдерів.</div>';
+    return;
+  }
+
+  container.replaceChildren();
+  mapSidebarRides.slice(0, 12).forEach(function(ride) {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'sidebar-ride-card';
+
+    const title = document.createElement('strong');
+    title.className = 'sidebar-ride-title';
+    title.textContent = ride.name || 'Мотопоїздка';
+
+    const creator = document.createElement('span');
+    creator.className = 'sidebar-ride-creator';
+    creator.textContent = 'Створив: ' + (ride.creatorName || 'Moto Rider');
+
+    const details = document.createElement('span');
+    details.className = 'sidebar-ride-details';
+    const date = ride.ride_date ? formatDate(ride.ride_date) : 'Дата не вказана';
+    details.textContent = date + (ride.ride_time ? ' · ' + ride.ride_time : '');
+
+    const location = document.createElement('span');
+    location.className = 'sidebar-ride-location';
+    location.textContent = ride.location || 'Місце збору на карті';
+
+    const action = document.createElement('span');
+    action.className = 'sidebar-ride-action';
+    action.textContent = 'Переглянути поїздку →';
+
+    card.append(title, creator, details, location, action);
+    card.addEventListener('click', function() {
+      map.easeTo({
+        center: [Number(ride.meeting_lng), Number(ride.meeting_lat)],
+        zoom: Math.max(map.getZoom(), 14),
+        duration: 650
+      });
+      showRideDetailSheet(ride);
+    });
+    container.appendChild(card);
+  });
 }
 
 function renderRideMarkers() {
@@ -2159,16 +2292,6 @@ function renderRideMarkers() {
 
     }
 
-const popup = new maplibregl.Popup({ offset: 25 })
-  .setHTML(
-    `<strong>🏍️ ${escapeHtml(ride.name)}</strong><br>` +
-    `📅 ${escapeHtml(formatDate(ride.date))}<br>` +
-    `🕐 ${escapeHtml(ride.time)}<br>` +
-    `📍 ${escapeHtml(ride.location)}<br><br>` +
-    `<button type="button" class="route-popup-button" onclick="routeToRide(${Number(ride.lat)},${Number(ride.lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}')">Прокласти маршрут</button><br><br>` +
-    `<button type="button" class="route-popup-button" onclick="startRideNavigation(${Number(ride.lat)},${Number(ride.lng)},'${encodeURIComponent(ride.name || '').replace(/'/g, '%27')}',this)">Поїхали</button>`
-  );
-
 const markerElement = document.createElement('div');
 markerElement.textContent = '🏍️';
 markerElement.style.fontSize = '28px';
@@ -2182,8 +2305,12 @@ const marker = new maplibregl.Marker({
     Number(ride.lng),
     Number(ride.lat)
   ])
-  .setPopup(popup)
   .addTo(map);
+
+marker.getElement().addEventListener('click', function(event) {
+  event.stopPropagation();
+  showRideDetailSheet(ride);
+});
 
 rideMarkers.push(marker);
 
@@ -2444,9 +2571,6 @@ async function renderRides(ridesFromSupabase) {
       Number.isFinite(rideLongitude) &&
       Math.abs(rideLatitude) <= 90 &&
       Math.abs(rideLongitude) <= 180;
-    const encodedRideName = encodeURIComponent(ride.name || 'точки збору')
-      .replace(/'/g, '%27');
-
     // -----------------------------------------------------
     // КАРТКА
     // -----------------------------------------------------
@@ -2487,13 +2611,6 @@ async function renderRides(ridesFromSupabase) {
             🕐
             ${escapeHtml(
               ride.ride_time || ''
-            )}
-          </div>
-
-          <div>
-            👥 до
-            ${escapeHtml(
-              ride.max_people
             )}
           </div>
 
@@ -2547,7 +2664,7 @@ async function renderRides(ridesFromSupabase) {
             class="ride-action"
             type="button"
             ${hasMeetingCoordinates ? '' : 'disabled'}
-            onclick="routeToRide(${rideLatitude},${rideLongitude},'${encodedRideName}')"
+            onclick="routeToRide(${rideLatitude},${rideLongitude})"
           >
             🧭 Маршрут
           </button>
@@ -2865,6 +2982,8 @@ async function showProfile() {
   currentScreen =
     'profile';
 
+  setActiveNav('profile');
+
   hideAllScreens();
   hideMapInterface();
 
@@ -2886,54 +3005,6 @@ async function showProfile() {
 // =========================================================
 // RENDER PROFILE
 // =========================================================
-
-function setHeaderAvatar(avatarUrl) {
-  const image = document.getElementById('headerAvatarImage');
-  const fallback = document.getElementById('headerAvatarFallback');
-  const avatar = typeof avatarUrl === 'string' ? avatarUrl.trim() : '';
-
-  if (image) {
-    if (avatar) {
-      image.src = avatar;
-      image.hidden = false;
-    } else {
-      image.removeAttribute('src');
-      image.hidden = true;
-    }
-  }
-
-  if (fallback) {
-    fallback.hidden = Boolean(avatar);
-  }
-}
-
-async function updateHeaderAvatar() {
-  if (!supabaseClient) {
-    setHeaderAvatar('');
-    return;
-  }
-
-  const { data: sessionData, error: sessionError } =
-    await supabaseClient.auth.getSession();
-
-  if (sessionError || !sessionData.session) {
-    setHeaderAvatar('');
-    return;
-  }
-
-  const { data: profileData, error: profileError } = await supabaseClient
-    .from('profiles')
-    .select('avatar_url')
-    .eq('id', sessionData.session.user.id)
-    .maybeSingle();
-
-  if (profileError) {
-    console.error('Помилка завантаження аватара:', profileError);
-    return;
-  }
-
-  setHeaderAvatar(profileData?.avatar_url || '');
-}
 
 async function renderProfile() {
 
@@ -3004,7 +3075,6 @@ const nickname =
 const avatar =
   profileData.avatar_url ||
   '';
-setHeaderAvatar(avatar);
   element.innerHTML = `
 
     <div class="profile-fullscreen">
@@ -4259,9 +4329,6 @@ async function loginUser() {
         'success'
       );
 
-      await updateHeaderAvatar();
-
-
       setTimeout(
         function() {
 
@@ -4376,29 +4443,30 @@ async function loginWithGoogle() {
   }
 
 
+  if (!/^https?:$/.test(window.location.protocol)) {
+    setAuthMessage('Вхід через Google працює на опублікованому сайті або localhost. Відкрий сайт за http:// чи https://.');
+    return;
+  }
+
+  const button = document.getElementById('googleAuthButton');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Перенаправляємо до Google…';
+  }
+
   try {
+    const returnUrl = new URL(window.location.href);
+    returnUrl.search = '';
+    returnUrl.hash = '';
 
-    const result =
-      await supabaseClient.auth.signInWithOAuth({
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: returnUrl.toString()
+      }
+    });
 
-        provider:
-          'google',
-
-        options: {
-
-          redirectTo:
-            window.location.origin
-
-        }
-
-      });
-
-
-    if (result.error) {
-
-      throw result.error;
-
-    }
+    if (error) throw error;
 
   } catch (error) {
 
@@ -4411,6 +4479,11 @@ async function loginWithGoogle() {
       error.message ||
       'Не вдалося увійти через Google.'
     );
+
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<span class="google-mark" aria-hidden="true">G</span> Продовжити з Google';
+    }
 
   }
 
@@ -4798,9 +4871,6 @@ document.addEventListener(
     );
 
 
-    updateHeaderAvatar();
-
-
     renderRideMarkers();
 
 
@@ -4810,9 +4880,8 @@ document.addEventListener(
     // Закриття модальних вікон
     // по кліку на затемнення.
 
-    document
-      .getElementById('modal')
-      ?.addEventListener(
+    const modal = document.getElementById('modal');
+    if (modal) modal.addEventListener(
         'click',
         function(event) {
 
@@ -4828,9 +4897,8 @@ document.addEventListener(
       );
 
 
-    document
-      .getElementById('ridersModal')
-      ?.addEventListener(
+    const ridersModal = document.getElementById('ridersModal');
+    if (ridersModal) ridersModal.addEventListener(
         'click',
         function(event) {
 
@@ -4846,9 +4914,8 @@ document.addEventListener(
       );
 
 
-    document
-      .getElementById('weatherModal')
-      ?.addEventListener(
+    const weatherModal = document.getElementById('weatherModal');
+    if (weatherModal) weatherModal.addEventListener(
         'click',
         function(event) {
 
@@ -4864,9 +4931,8 @@ document.addEventListener(
       );
 
 
-    document
-      .getElementById('authModal')
-      ?.addEventListener(
+    const authModal = document.getElementById('authModal');
+    if (authModal) authModal.addEventListener(
         'click',
         function(event) {
 
@@ -4884,9 +4950,8 @@ document.addEventListener(
 
     // Enter у пошуку адреси.
 
-    document
-      .getElementById('rideAddress')
-      ?.addEventListener(
+    const rideAddress = document.getElementById('rideAddress');
+    if (rideAddress) rideAddress.addEventListener(
         'keydown',
         function(event) {
 
@@ -4916,15 +4981,19 @@ document.addEventListener(
             event
           );
 
-          if (!session || event === 'SIGNED_OUT') {
-            setHeaderAvatar('');
-          } else if (
-            event === 'SIGNED_IN' ||
-            event === 'INITIAL_SESSION' ||
-            event === 'USER_UPDATED'
+          if (
+            event === 'SIGNED_IN' &&
+            session &&
+            session.user.app_metadata &&
+            session.user.app_metadata.provider === 'google'
           ) {
-            // Schedule after the auth callback so Supabase can release its lock.
-            setTimeout(updateHeaderAvatar, 0);
+            // Відкладено, щоб не запускати Supabase-запити всередині auth callback.
+            setTimeout(function() {
+              closeAuthModal();
+              showMap();
+              updateNotificationsBadge();
+              showSuccessMessage('Вхід через Google виконано.');
+            }, 0);
           }
 
         }

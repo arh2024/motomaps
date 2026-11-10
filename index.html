@@ -24,6 +24,20 @@
 
   <main id="map"></main>
 
+  <aside id="mapSidebar" class="map-sidebar" aria-label="Поїздки на карті">
+    <div class="map-sidebar-heading">
+      <div>
+        <span class="sidebar-eyebrow">MOTO MAPS</span>
+        <h2>Поїздки поруч</h2>
+      </div>
+      <button type="button" class="sidebar-create-button" onclick="openModal()" aria-label="Створити поїздку">+</button>
+    </div>
+    <p class="map-sidebar-intro">Знайди компанію та приєднуйся до маршруту.</p>
+    <div id="mapSidebarRides" class="map-sidebar-rides" aria-live="polite">
+      <div class="sidebar-empty-state">Завантажуємо поїздки…</div>
+    </div>
+  </aside>
+
 
   <!-- =====================================================
        ВЕРХНЯ ПАНЕЛЬ
@@ -82,59 +96,28 @@
     hidden
   >0</span>
 </button>
-<button
-  id="headerAvatar"
-  class="avatar"
-  type="button"
-  onclick="showProfile()"
-  title="Профіль"
-  aria-label="Профіль"
->
-  <img
-    id="headerAvatarImage"
-    class="header-avatar-image"
-    alt="Аватар"
-    hidden
-  >
-
-  <span
-    id="headerAvatarFallback"
-    class="header-avatar-fallback"
-    aria-hidden="true"
-  >
-    <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <path d="M24 4C13.5 4 6 12.5 6 24v7c0 2 1.6 3.5 3.6 3.5h28.8c2 0 3.6-1.5 3.6-3.5v-7C42 12.5 34.5 4 24 4Z" />
-      <path d="M9 21c3.5-3.2 26.5-3.2 30 0v7c0 4-3 7-7 7H16c-4 0-7-3-7-7v-7Z" />
-      <path d="M12 21c4-2 20-2 24 0M16 35l2 6h12l2-6M21 41h6" />
-      <path d="m10 10 3 3M38 10l-3 3" />
-    </svg>
-  </span>
-</button>
-
     </div>
 
   </header>
 
-  <div id="routeInfoPanel" class="route-info-panel" hidden>
+  <section id="rideDetailSheet" class="ride-detail-sheet" aria-hidden="true" hidden>
+    <div class="ride-sheet-handle" aria-hidden="true"></div>
     <button
-      class="route-info-close"
+      class="ride-sheet-close"
       type="button"
-      onclick="clearRideRoute()"
-      aria-label="Закрити маршрут"
+      onclick="closeRideDetailSheet()"
+      aria-label="Закрити картку поїздки"
     >×</button>
-    <strong id="routeInfoTitle">Маршрут до мотопоїздки</strong>
-    <span id="routeInfoStatus" class="route-info-status"></span>
-    <div class="route-info-stats">
-      <span id="routeDistance"></span>
-      <span id="routeDuration"></span>
+    <div class="ride-detail-main-row">
+      <strong id="rideDetailName" class="ride-detail-name"></strong>
+      <span class="ride-detail-creator">Створив: <b id="rideDetailCreator"></b></span>
     </div>
-    <small class="route-attribution">Маршрут: OSRM · дані OpenStreetMap</small>
-    <button
-      class="route-google-button"
-      type="button"
-      onclick="openGoogleMapsRoute()"
-    >Відкрити навігацію в Google Maps</button>
-  </div>
+    <div class="ride-detail-date-row">
+      <span>📅 <b id="rideDetailDate"></b></span>
+      <span>🕐 <b id="rideDetailTime"></b></span>
+    </div>
+    <div id="rideDetailActions" class="ride-popup-actions ride-detail-actions"></div>
+  </section>
 
  
   <!-- =====================================================
@@ -216,27 +199,14 @@
       class="map-control location-control"
       type="button"
       onclick="findMe()"
-      title="Знайти мене"
+      title="Де я?"
+      aria-label="Де я?"
     >
-      ➤
-    </button>
-
-    <button
-      class="map-control"
-      type="button"
-      onclick="map.zoomIn()"
-      title="Збільшити"
-    >
-      +
-    </button>
-
-    <button
-      class="map-control"
-      type="button"
-      onclick="map.zoomOut()"
-      title="Зменшити"
-    >
-      −
+      <svg class="location-target-icon" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="18" fill="#e8efff" />
+        <circle cx="24" cy="24" r="12" fill="#ffffff" />
+        <circle cx="24" cy="24" r="7" fill="#2468e8" />
+      </svg>
     </button>
 
   </div>
@@ -296,29 +266,26 @@
     aria-label="Основна навігація"
   >
    
-  <button
-      id="navRides"
-      type="button"
-      class="nav-item"
-      onclick="showRides()"
-    >
-      <span>+</span>
-      <small>Поїздки</small>
-    </button> 
-  
-  <!-- =====================================================
-       КНОПКА СТВОРЕННЯ ПОЇЗДКИ
-       ===================================================== -->
-
-<button
-      id="navCreateRide"
-      type="button"
-      class="nav-item"
-      onclick="openModal()"
-    >
-      <span>+</span>
+    <button id="navMap" type="button" class="nav-item" onclick="showMap()" aria-label="Карта">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15m6-12v15"/></svg>
+      <small>Карта</small>
+    </button>
+    <button id="navRoutes" type="button" class="nav-item" onclick="showRoutes()" aria-label="Маршрути">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2.5 5.1-5.1 2.5 2.5-5.1z"/></svg>
+      <small>Маршрути</small>
+    </button>
+    <button id="navCreateRide" type="button" class="nav-item nav-create-item" onclick="openModal()" aria-label="Створити поїздку">
+      <span class="nav-create-icon" aria-hidden="true">+</span>
       <small>Створити</small>
-    </button> 
+    </button>
+    <button id="navCommunity" type="button" class="nav-item" onclick="showCommunity()" aria-label="Спільнота">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+      <small>Спільнота</small>
+    </button>
+    <button id="navProfile" type="button" class="nav-item" onclick="showProfile()" aria-label="Профіль">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>
+      <small>Профіль</small>
+    </button>
 
 
   </nav>
@@ -354,7 +321,7 @@
     <div class="ride-form">
 
       <label for="rideName">
-        Назва мотопоїздки
+        Назва поїздки
       </label>
 
       <input
@@ -396,20 +363,6 @@
 
       </div>
 
-
-      <label for="ridePeople">
-        Кількість учасників
-      </label>
-
-      <input
-        id="ridePeople"
-        type="number"
-        min="1"
-        max="100"
-        value="5"
-      >
-
-
       <label for="rideAddress">
         Точка збору
       </label>
@@ -419,16 +372,19 @@
         <input
           id="rideAddress"
           type="text"
-          placeholder="Введіть адресу"
+          placeholder="Введіть адресу місця збору"
           autocomplete="off"
         >
 
         <button
-          id="searchMeetingAddress"
+          id="chooseLocation"
           type="button"
           class="secondary-btn"
+          onclick="chooseLocation()"
+          title="Обрати точку на карті"
+          aria-label="Обрати точку на карті"
         >
-          🔍
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
         </button>
 
       </div>
@@ -447,23 +403,12 @@
         📍 Точку збору не вибрано
       </div>
 
-
-      <button
-        id="chooseLocation"
-        type="button"
-        class="secondary-btn"
-        onclick="chooseLocation()"
-      >
-        📍 ВИБРАТИ ТОЧКУ НА КАРТІ
-      </button>
-
-
 <button
   class="create-btn"
   type="button"
-  onclick="openCreateRideScreen()"
+  onclick="saveRide()"
 >
-  + Створити мотопоїздку
+  Опублікувати поїздку
 </button>
 
 
@@ -790,7 +735,8 @@
       type="button"
       onclick="loginWithGoogle()"
     >
-      🌐 Продовжити з Google
+      <span class="google-mark" aria-hidden="true">G</span>
+      Продовжити з Google
     </button>
 
 
