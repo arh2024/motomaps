@@ -4736,6 +4736,17 @@ function renderWeather(
     temperature +
     '°C';
 
+  const weatherButtonWind = document.getElementById('weatherButtonWind');
+  const weatherButtonHumidity = document.getElementById('weatherButtonHumidity');
+  if (weatherButtonWind) {
+    weatherButtonWind.textContent =
+      'Вітер ' + Math.round(current.wind_speed_10m) + ' м/с';
+  }
+  if (weatherButtonHumidity) {
+    weatherButtonHumidity.textContent =
+      Math.round(current.relative_humidity_2m) + '%';
+  }
+
 
   document.getElementById(
     'weatherCurrentIcon'

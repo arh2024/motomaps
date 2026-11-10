@@ -171,15 +171,11 @@
     type="button"
     onclick="openWeather()"
   >
-
-    <span id="weatherButtonIcon">
-      🌤️
+    <span id="weatherButtonIcon" class="weather-button-icon" aria-hidden="true">🌤️</span>
+    <span class="weather-button-copy">
+      <strong id="weatherButtonTemperature">--°C</strong>
+      <small><span id="weatherButtonWind">Вітер -- м/с</span><span class="weather-copy-separator">·</span><span id="weatherButtonHumidity">--%</span></small>
     </span>
-
-    <span id="weatherButtonTemperature">
-      --°C
-    </span>
-
   </button>
 
 
