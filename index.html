@@ -238,6 +238,28 @@
 
 </section>
 
+<dialog id="communityChatDialog" class="community-chat-dialog" aria-labelledby="communityChatName">
+  <div class="community-chat-panel">
+    <header class="community-chat-header">
+      <button class="community-chat-back" type="button" onclick="closeCommunityChat()" aria-label="Назад до спільноти">‹</button>
+      <div class="community-chat-heading">
+        <strong id="communityChatName">Особистий чат</strong>
+        <small id="communityChatBike"></small>
+      </div>
+      <button class="community-chat-close" type="button" onclick="closeCommunityChat()" aria-label="Закрити чат">×</button>
+    </header>
+    <div id="communityChatMessages" class="community-chat-messages" aria-live="polite">
+      <p class="community-chat-empty">Завантажую повідомлення…</p>
+    </div>
+    <form class="community-chat-compose" onsubmit="sendDirectMessage(event)">
+      <input id="communityChatInput" type="text" maxlength="2000" autocomplete="off" placeholder="Напишіть повідомлення…" aria-label="Повідомлення" required>
+      <button type="submit" aria-label="Надіслати повідомлення" title="Надіслати">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+      </button>
+    </form>
+  </div>
+</dialog>
+
 
   <section
     id="profile"
