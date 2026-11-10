@@ -3,6 +3,9 @@
 // ОСНОВНА ЛОГІКА
 // =========================================================
 
+// Set the auth mode before any initialization can trigger auth UI callbacks.
+let authMode = 'login';
+
 
 // =========================================================
 // SUPABASE
@@ -21,7 +24,15 @@ if (window.supabase) {
   supabaseClient =
     window.supabase.createClient(
       SUPABASE_URL,
-      SUPABASE_KEY
+      SUPABASE_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          flowType: 'pkce'
+        }
+      }
     );
 
   console.log('Supabase підключено');
@@ -37,6 +48,10 @@ const MAP_STYLES = {
   dark: 'https://tiles.openfreemap.org/styles/dark',
   light: 'https://tiles.openfreemap.org/styles/liberty'
 };
+
+const systemThemeQuery = window.matchMedia
+  ? window.matchMedia('(prefers-color-scheme: dark)')
+  : null;
 
 let activeMapStyle = MAP_STYLES[getSavedTheme()];
 
@@ -218,9 +233,11 @@ let meetingLocation = null;
 
 let rideMarkers = [];
 let mapSidebarRides = [];
+let nearestRideForWidget = null;
 let currentDirectChat = null;
 let directChatPollTimer = null;
 let directChatLoading = false;
+let unreadMessagesPollTimer = null;
 let activeRidePopup = null;
 
 let currentScreen = 'map';
@@ -235,10 +252,6 @@ let currentRidersRideId = null;
 // =========================================================
 // THEME
 // =========================================================
-
-const systemThemeQuery = window.matchMedia
-  ? window.matchMedia('(prefers-color-scheme: dark)')
-  : null;
 
 function getThemeMode() {
   const savedMode = localStorage.getItem('motoTheme');
@@ -643,6 +656,7 @@ function hideMapInterface() {
     'mapSidebar',
     'mapSearchBox',
     'mapFilters',
+    'mapInfoWidgets',
     'weatherButton',
     'mapControls',
     'mapAddButton'
@@ -681,6 +695,9 @@ function showMapInterface() {
       'flex',
 
     mapFilters:
+      'flex',
+
+    mapInfoWidgets:
       'flex',
 
     weatherButton:
@@ -901,6 +918,9 @@ function prepareRidesScreen(title, navItem) {
   }
 
   rides.style.display = 'block';
+  rides.classList.toggle('community-screen', navItem === 'community');
+  const communityFilters = document.getElementById('communityFilters');
+  if (communityFilters) communityFilters.hidden = navItem !== 'community';
   const ridesTitle = rides.querySelector('.rides-screen-header h1');
   if (ridesTitle) ridesTitle.textContent = title || 'МОТОПОЇЗДКИ';
   return document.getElementById('ridesList');
@@ -958,18 +978,23 @@ async function loadCommunityRiders() {
   if (!supabaseClient) throw new Error('Supabase не підключено.');
   const { data, error } = await supabaseClient
     .from('profiles')
-    .select('id, nickname, bike, phone')
+    .select('id, nickname, bike, bike_model, bike_type, phone, city, avatar_url')
     .order('nickname', { ascending: true });
   if (error) throw error;
   return data || [];
 }
 
 function renderCommunityRiders(riders, list) {
+  window.communityRiderRecords = riders;
+  populateCommunityFilters(riders);
+  renderCommunityRiderCards(riders, list);
+}
+
+function renderCommunityRiderCards(riders, list) {
   list.replaceChildren();
   list.classList.add('community-list');
-
   if (!riders.length) {
-    list.innerHTML = '<div class="empty-state"><h3>Поки немає зареєстрованих райдерів</h3></div>';
+    list.innerHTML = '<div class="empty-state"><h3>За цими фільтрами райдерів не знайдено</h3></div>';
     return;
   }
 
@@ -979,13 +1004,31 @@ function renderCommunityRiders(riders, list) {
 
     const identity = document.createElement('div');
     identity.className = 'community-rider-identity';
-    const name = document.createElement('strong');
-    name.className = 'community-rider-name';
+    const name = document.createElement('button');
+    name.type = 'button';
+    name.className = 'community-rider-name community-rider-profile-link';
     name.textContent = rider.nickname || 'Moto Rider';
+    name.setAttribute('aria-label', 'Відкрити профіль: ' + (rider.nickname || 'Moto Rider'));
+    name.addEventListener('click', function() {
+      openCommunityRiderProfile(rider);
+    });
+    let avatar = document.createElement('img');
+    avatar.className = 'community-rider-avatar';
+    avatar.alt = '';
+    avatar.loading = 'lazy';
+    if (rider.avatar_url) {
+      avatar.src = rider.avatar_url;
+      avatar.addEventListener('error', function() { avatar.replaceWith(makeCommunityAvatarFallback()); }, { once: true });
+    } else {
+      avatar = makeCommunityAvatarFallback();
+    }
+    const nameRow = document.createElement('div');
+    nameRow.className = 'community-rider-name-row';
+    nameRow.append(avatar, name);
     const bike = document.createElement('span');
     bike.className = 'community-rider-bike';
-    bike.textContent = rider.bike || 'Мотоцикл не вказано';
-    identity.append(name, bike);
+    bike.textContent = [rider.bike_model, rider.bike_type, rider.bike].filter(Boolean).join(' · ') || 'Мотоцикл не вказано';
+    identity.append(nameRow, bike);
 
     const actions = document.createElement('div');
     actions.className = 'community-rider-actions';
@@ -1022,6 +1065,99 @@ function renderCommunityRiders(riders, list) {
   });
 }
 
+function makeCommunityAvatarFallback() {
+  const fallback = document.createElement('span');
+  fallback.className = 'community-rider-avatar community-rider-avatar-fallback';
+  fallback.setAttribute('aria-hidden', 'true');
+  fallback.textContent = '🏍️';
+  return fallback;
+}
+
+function populateCommunityFilters(riders) {
+  const options = [
+    ['communityCityFilter', 'Усі міста', rider => rider.city],
+    ['communityTypeFilter', 'Вибрати тип мотоцикла', rider => rider.bike_type]
+  ];
+  options.forEach(function([id, label, getValue]) {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const selected = select.value;
+    select.replaceChildren(new Option(label, ''));
+    const values = riders.map(getValue).map(value => String(value || '').trim()).filter(Boolean);
+    if (id === 'communityTypeFilter') values.push('Чопер', 'Спортбайк', 'Ендуро');
+    [...new Set(values)]
+      .sort((a, b) => a.localeCompare(b, 'uk'))
+      .forEach(value => select.add(new Option(value, value)));
+    select.value = selected;
+  });
+}
+
+function filterCommunityRiders() {
+  const riders = window.communityRiderRecords || [];
+  const city = document.getElementById('communityCityFilter')?.value || '';
+  const type = document.getElementById('communityTypeFilter')?.value || '';
+  const filtered = riders.filter(rider => (!city || rider.city === city) && (!type || rider.bike_type === type));
+  const list = document.getElementById('ridesList');
+  renderCommunityRiderCards(filtered, list);
+}
+
+function openCommunityRiderProfile(rider) {
+  const dialog = document.getElementById('communityRiderDialog');
+  if (!dialog) return;
+
+  document.getElementById('communityRiderName').textContent = rider.nickname || 'Moto Rider';
+  document.getElementById('communityRiderBike').textContent = [rider.bike_model, rider.bike_type, rider.bike].filter(Boolean).join(' · ') || 'Мотоцикл не вказано';
+  document.getElementById('communityRiderCity').textContent = rider.city || 'Місто не вказано';
+
+  const avatar = document.getElementById('communityRiderAvatar');
+  const fallback = document.getElementById('communityRiderAvatarFallback');
+  avatar.onerror = function() {
+    avatar.hidden = true;
+    fallback.hidden = false;
+  };
+  if (rider.avatar_url) {
+    avatar.src = rider.avatar_url;
+    avatar.hidden = false;
+    fallback.hidden = true;
+  } else {
+    avatar.removeAttribute('src');
+    avatar.hidden = true;
+    fallback.hidden = false;
+  }
+
+  const messageButton = document.getElementById('communityRiderMessage');
+  messageButton.onclick = function() {
+    closeCommunityRiderProfile();
+    openCommunityChat(rider);
+  };
+
+  const callButton = document.getElementById('communityRiderCall');
+  callButton.onclick = function() {
+    const phone = String(rider.phone || '').replace(/[^\d+*#,;]/g, '');
+    if (!phone) {
+      closeCommunityRiderProfile();
+      showSuccessMessage('Користувач не надав номер телефону. Напишіть йому в особистий чат.');
+      return;
+    }
+    closeCommunityRiderProfile();
+    window.location.href = 'tel:' + phone;
+  };
+
+  if (!dialog.dataset.backdropBound) {
+    dialog.addEventListener('click', function(event) {
+      if (event.target === dialog) closeCommunityRiderProfile();
+    });
+    dialog.dataset.backdropBound = 'true';
+  }
+
+  if (!dialog.open) dialog.showModal();
+}
+
+function closeCommunityRiderProfile() {
+  const dialog = document.getElementById('communityRiderDialog');
+  if (dialog && dialog.open) dialog.close();
+}
+
 async function openCommunityChat(rider) {
   if (!supabaseClient) {
     showSuccessMessage('Чат недоступний: немає підключення до бази даних.');
@@ -1048,7 +1184,7 @@ async function openCommunityChat(rider) {
   const dialog = document.getElementById('communityChatDialog');
   if (!dialog) return;
   document.getElementById('communityChatName').textContent = currentDirectChat.nickname;
-  document.getElementById('communityChatBike').textContent = rider.bike || 'Мотоцикл не вказано';
+  document.getElementById('communityChatBike').textContent = [rider.bike_model, rider.bike_type, rider.bike].filter(Boolean).join(' · ') || 'Мотоцикл не вказано';
   document.getElementById('communityChatMessages').innerHTML = '<p class="community-chat-empty">Завантажую повідомлення…</p>';
 
   if (!dialog.dataset.cleanupBound) {
@@ -1066,6 +1202,146 @@ async function openCommunityChat(rider) {
   directChatPollTimer = setInterval(loadDirectMessages, 6000);
 }
 
+async function refreshMessagesBadge() {
+  const badge = document.getElementById('messagesBadge');
+  const button = document.getElementById('messagesButton');
+  if (!badge || !button) return;
+  if (!supabaseClient) {
+    badge.hidden = true;
+    return;
+  }
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !sessionData.session) {
+    badge.hidden = true;
+    button.classList.remove('has-unread');
+    button.setAttribute('aria-label', 'Повідомлення');
+    return;
+  }
+  const { count, error } = await supabaseClient
+    .from('direct_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('recipient_id', sessionData.session.user.id)
+    .eq('is_read', false);
+  if (error) {
+    console.error('Не вдалося оновити лічильник повідомлень:', error);
+    return;
+  }
+  const unread = count || 0;
+  badge.textContent = unread > 99 ? '99+' : String(unread);
+  badge.hidden = unread === 0;
+  button.classList.toggle('has-unread', unread > 0);
+  button.setAttribute('aria-label', unread ? `Повідомлення, нових: ${unread}` : 'Повідомлення');
+}
+
+async function openMessagesInbox() {
+  const dialog = document.getElementById('messagesInboxDialog');
+  const list = document.getElementById('messagesInboxList');
+  if (!dialog || !list) return;
+  if (!supabaseClient) {
+    showSuccessMessage('Повідомлення доступні після підключення до акаунта.');
+    return;
+  }
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !sessionData.session) {
+    openAuthModal();
+    return;
+  }
+  const userId = sessionData.session.user.id;
+  list.innerHTML = '<p class="community-chat-empty">Завантажую повідомлення…</p>';
+  if (!dialog.open) dialog.showModal();
+  const { data: unreadMessages, error } = await supabaseClient
+    .from('direct_messages')
+    .select('id, sender_id, body, created_at')
+    .eq('recipient_id', userId)
+    .eq('is_read', false)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) {
+    console.error('Помилка завантаження нових повідомлень:', error);
+    list.innerHTML = '<p class="community-chat-empty">Не вдалося завантажити. Повторно виконайте supabase/direct-messages.sql у Supabase SQL Editor.</p>';
+    return;
+  }
+  if (!unreadMessages || !unreadMessages.length) {
+    list.innerHTML = '<p class="community-chat-empty">Нових повідомлень немає.</p>';
+    await refreshMessagesBadge();
+    return;
+  }
+
+  const grouped = new Map();
+  unreadMessages.forEach(function(message) {
+    const entry = grouped.get(message.sender_id) || { latest: message, count: 0 };
+    entry.count += 1;
+    grouped.set(message.sender_id, entry);
+  });
+  const senderIds = [...grouped.keys()];
+  const { data: profiles, error: profilesError } = await supabaseClient
+    .from('profiles')
+    .select('id, nickname, bike, avatar_url, city, phone')
+    .in('id', senderIds);
+  if (profilesError) console.error('Не вдалося завантажити профілі відправників:', profilesError);
+  const profilesById = new Map((profiles || []).map(profile => [profile.id, profile]));
+  list.replaceChildren();
+  senderIds.forEach(function(senderId) {
+    const item = grouped.get(senderId);
+    const rider = profilesById.get(senderId) || { id: senderId, nickname: 'Moto Rider' };
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'messages-inbox-item';
+    let avatar = document.createElement('img');
+    avatar.className = 'messages-inbox-avatar';
+    avatar.alt = '';
+    if (rider.avatar_url) {
+      avatar.src = rider.avatar_url;
+      avatar.addEventListener('error', () => avatar.replaceWith(makeCommunityAvatarFallback()), { once: true });
+    } else {
+      avatar = rowAvatarFallback();
+    }
+    const copy = document.createElement('span');
+    copy.className = 'messages-inbox-copy';
+    const name = document.createElement('strong');
+    name.textContent = rider.nickname || 'Moto Rider';
+    const preview = document.createElement('small');
+    preview.textContent = item.latest.body || 'Нове повідомлення';
+    const time = document.createElement('time');
+    time.dateTime = item.latest.created_at;
+    time.textContent = new Intl.DateTimeFormat('uk-UA', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(item.latest.created_at));
+    copy.append(name, preview, time);
+    const count = document.createElement('span');
+    count.className = 'messages-inbox-count';
+    count.textContent = item.count > 99 ? '99+' : String(item.count);
+    row.append(avatar, copy, count);
+    row.addEventListener('click', async function() {
+      await markDirectMessagesRead(senderId, userId);
+      closeMessagesInbox();
+      openCommunityChat(rider);
+    });
+    list.appendChild(row);
+  });
+}
+
+function rowAvatarFallback() {
+  const fallback = document.createElement('span');
+  fallback.className = 'messages-inbox-avatar messages-inbox-avatar-fallback';
+  fallback.textContent = '🏍️';
+  return fallback;
+}
+
+async function markDirectMessagesRead(senderId, recipientId) {
+  const { error } = await supabaseClient
+    .from('direct_messages')
+    .update({ is_read: true })
+    .eq('sender_id', senderId)
+    .eq('recipient_id', recipientId)
+    .eq('is_read', false);
+  if (error) console.error('Не вдалося позначити повідомлення прочитаними:', error);
+  await refreshMessagesBadge();
+}
+
+function closeMessagesInbox() {
+  const dialog = document.getElementById('messagesInboxDialog');
+  if (dialog && dialog.open) dialog.close();
+}
+
 function closeCommunityChat() {
   const dialog = document.getElementById('communityChatDialog');
   if (dialog && dialog.open) dialog.close();
@@ -1077,7 +1353,7 @@ async function loadDirectMessages() {
   const chat = currentDirectChat;
   const { data, error } = await supabaseClient
     .from('direct_messages')
-    .select('id, sender_id, recipient_id, body, created_at')
+    .select('id, sender_id, recipient_id, body, created_at, is_read')
     .or(`and(sender_id.eq.${chat.userId},recipient_id.eq.${chat.peerId}),and(sender_id.eq.${chat.peerId},recipient_id.eq.${chat.userId})`)
     .order('created_at', { ascending: true })
     .limit(200);
@@ -1089,6 +1365,13 @@ async function loadDirectMessages() {
     const messages = document.getElementById('communityChatMessages');
     messages.innerHTML = '<p class="community-chat-empty">Не вдалося завантажити чат. Перевірте, чи створена таблиця direct_messages у Supabase.</p>';
     return;
+  }
+
+  const unreadIds = (data || []).filter(message => message.sender_id === chat.peerId && !message.is_read).map(message => message.id);
+  if (unreadIds.length) {
+    const { error: readError } = await supabaseClient.from('direct_messages').update({ is_read: true }).in('id', unreadIds);
+    if (readError) console.error('Не вдалося оновити статус повідомлень:', readError);
+    else await refreshMessagesBadge();
   }
 
   const messages = document.getElementById('communityChatMessages');
@@ -2033,7 +2316,7 @@ const {
   error: profileError
 } = await supabaseClient
   .from('profiles')
-  .select('nickname, bike')
+  .select('id, nickname, bike, phone, city, avatar_url')
   .eq('id', user.id)
   .single();
 
@@ -2137,8 +2420,14 @@ if (profileError) {
       savedRide.meeting_lng,
 
     creator:
-      profile.nickname ||
+      profileData.nickname ||
       'Moto Rider',
+
+    creator_id:
+      profileData.id,
+
+    creatorProfile:
+      profileData,
 
     riders: [
 
@@ -2224,6 +2513,19 @@ function showRideMapPopup(ride, longitude, latitude) {
   const creator = document.createElement('strong');
   creator.className = 'ride-map-popup-creator';
   creator.textContent = ride.creatorName || ride.creator || 'Moto Rider';
+  let creatorElement = creator;
+  if (ride.creatorProfile && ride.creatorProfile.id) {
+    creatorElement = document.createElement('button');
+    creatorElement.type = 'button';
+    creatorElement.className = 'ride-map-popup-creator';
+    creatorElement.textContent = ride.creatorProfile.nickname || ride.creatorName || 'Moto Rider';
+    creatorElement.setAttribute('aria-label', 'Відкрити профіль райдера');
+    creatorElement.addEventListener('click', function(event) {
+      event.stopPropagation();
+      if (activeRidePopup) activeRidePopup.remove();
+      openCommunityRiderProfile(ride.creatorProfile);
+    });
+  }
 
   const details = document.createElement('div');
   details.className = 'ride-map-popup-details';
@@ -2237,7 +2539,7 @@ function showRideMapPopup(ride, longitude, latitude) {
   time.textContent = ride.ride_time || ride.time || 'Час не вказано';
 
   details.append(date, time);
-  content.append(creator, details);
+  content.append(creatorElement, details);
 
   activeRidePopup = new maplibregl.Popup({
     closeButton: false,
@@ -2261,7 +2563,7 @@ function showRideDetailSheet(ride) {
 
   const rideName = ride.name || 'Мотопоїздка';
   const rideDate = ride.ride_date || ride.date;
-  const rideTime = ride.ride_time || ride.time;
+const rideTime = ride.ride_time || ride.time;
   const creatorName = ride.creatorName || ride.creator || 'Moto Rider';
   const latitude = Number(
     ride.meeting_lat !== undefined && ride.meeting_lat !== null
@@ -2275,7 +2577,15 @@ function showRideDetailSheet(ride) {
   );
 
   document.getElementById('rideDetailName').textContent = rideName;
-  document.getElementById('rideDetailCreator').textContent = creatorName;
+  const creatorButton = document.getElementById('rideDetailCreator');
+  creatorButton.textContent = creatorName;
+  creatorButton.disabled = !ride.creatorProfile;
+  creatorButton.onclick = ride.creatorProfile
+    ? function() {
+        closeRideDetailSheet();
+        openCommunityRiderProfile(ride.creatorProfile);
+      }
+    : null;
   document.getElementById('rideDetailDate').textContent = rideDate ? formatDate(rideDate) : 'Не вказано';
   document.getElementById('rideDetailTime').textContent = rideTime || 'Не вказано';
 
@@ -2328,6 +2638,7 @@ async function loadRideMarkersFromSupabase() {
   if (!supabaseClient) {
     mapSidebarRides = [];
     renderMapSidebarRides();
+    renderNearestRideWidget([]);
     return;
 
   }
@@ -2353,6 +2664,7 @@ async function loadRideMarkersFromSupabase() {
       error
     );
 
+    renderNearestRideWidget([]);
     const container = document.getElementById('mapSidebarRides');
     if (container) container.textContent = 'Не вдалося завантажити поїздки. Перевір підключення та спробуй ще раз.';
 
@@ -2368,11 +2680,12 @@ async function loadRideMarkersFromSupabase() {
       .filter(Boolean)
   ));
   const creatorNames = {};
+  const creatorProfiles = {};
 
   if (creatorIds.length) {
     const { data: profiles, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('id, nickname')
+      .select('id, nickname, bike, phone, city, avatar_url')
       .in('id', creatorIds);
 
     if (profileError) {
@@ -2380,6 +2693,7 @@ async function loadRideMarkersFromSupabase() {
     } else {
       (profiles || []).forEach(function(profile) {
         creatorNames[profile.id] = profile.nickname || 'Moto Rider';
+        creatorProfiles[profile.id] = profile;
       });
     }
   }
@@ -2394,9 +2708,11 @@ async function loadRideMarkersFromSupabase() {
       Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
   }).map(function(ride) {
     ride.creatorName = creatorNames[ride.creator_id] || 'Moto Rider';
+    ride.creatorProfile = creatorProfiles[ride.creator_id] || null;
     return ride;
   });
   renderMapSidebarRides();
+  renderNearestRideWidget(mapSidebarRides);
 
 
   clearRideMarkers();
@@ -2415,6 +2731,7 @@ async function loadRideMarkersFromSupabase() {
 
 
   ride.creatorName = creatorNames[ride.creator_id] || 'Moto Rider';
+  ride.creatorProfile = creatorProfiles[ride.creator_id] || null;
 
 const markerElement = document.createElement('button');
 markerElement.type = 'button';
@@ -2467,6 +2784,22 @@ function renderMapSidebarRides() {
     const creator = document.createElement('span');
     creator.className = 'sidebar-ride-creator';
     creator.textContent = 'Створив: ' + (ride.creatorName || 'Moto Rider');
+    if (ride.creatorProfile) {
+      creator.setAttribute('role', 'button');
+      creator.setAttribute('tabindex', '0');
+      creator.setAttribute('aria-label', 'Відкрити профіль райдера');
+      creator.addEventListener('click', function(event) {
+        event.stopPropagation();
+        openCommunityRiderProfile(ride.creatorProfile);
+      });
+      creator.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          event.stopPropagation();
+          openCommunityRiderProfile(ride.creatorProfile);
+        }
+      });
+    }
 
     const details = document.createElement('span');
     details.className = 'sidebar-ride-details';
@@ -2492,6 +2825,55 @@ function renderMapSidebarRides() {
     });
     container.appendChild(card);
   });
+}
+
+function renderNearestRideWidget(rides) {
+  const widget = document.getElementById('nearestRideWidget');
+  const name = document.getElementById('nearestRideName');
+  const dateTime = document.getElementById('nearestRideDateTime');
+  if (!widget || !name || !dateTime) return;
+
+  const now = Date.now();
+  const upcoming = (rides || []).map(function(ride) {
+    const rideDate = ride.ride_date || ride.date;
+    const rideTime = ride.ride_time || ride.time;
+    if (!rideDate || !rideTime) return null;
+    const timestamp = new Date(rideDate + 'T' + rideTime).getTime();
+    return Number.isFinite(timestamp) && timestamp >= now
+      ? { ride: ride, timestamp: timestamp }
+      : null;
+  }).filter(Boolean).sort(function(a, b) {
+    return a.timestamp - b.timestamp;
+  });
+
+  nearestRideForWidget = upcoming.length ? upcoming[0].ride : null;
+  widget.disabled = !nearestRideForWidget;
+  widget.setAttribute('aria-label', nearestRideForWidget
+    ? 'Найближча поїздка: ' + (nearestRideForWidget.name || 'Мотопоїздка')
+    : 'Немає майбутніх поїздок');
+  name.textContent = nearestRideForWidget
+    ? (nearestRideForWidget.name || 'Мотопоїздка')
+    : 'Поки немає запланованих';
+  dateTime.textContent = nearestRideForWidget
+    ? (nearestRideForWidget.creatorName || 'Moto Rider') + ' · ' +
+      formatDate(nearestRideForWidget.ride_date || nearestRideForWidget.date) + ' · ' +
+      (nearestRideForWidget.ride_time || nearestRideForWidget.time)
+    : '';
+}
+
+function openNearestRide() {
+  if (!nearestRideForWidget) return;
+  const ride = nearestRideForWidget;
+  const latitude = Number(ride.meeting_lat !== undefined ? ride.meeting_lat : ride.lat);
+  const longitude = Number(ride.meeting_lng !== undefined ? ride.meeting_lng : ride.lng);
+  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+    map.easeTo({
+      center: [longitude, latitude],
+      zoom: Math.max(map.getZoom(), 14),
+      duration: 650
+    });
+  }
+  showRideDetailSheet(ride);
 }
 
 function renderRideMarkers() {
@@ -2633,7 +3015,10 @@ async function renderRides(ridesFromSupabase) {
         .select(`
           id,
           nickname,
-          bike
+          bike,
+          phone,
+          city,
+          avatar_url
         `)
         .in(
           'id',
@@ -2806,9 +3191,13 @@ async function renderRides(ridesFromSupabase) {
 
         <div class="ride-creator">
           👤 Створив:
-          <strong>
-            ${escapeHtml(creatorName)}
-          </strong>
+          <button
+            class="ride-profile-link"
+            type="button"
+            data-profile-id="${escapeHtml(creator && creator.id ? creator.id : '')}"
+            ${creator && creator.id ? '' : 'disabled'}
+            aria-label="Відкрити профіль райдера: ${escapeHtml(creatorName)}"
+          >${escapeHtml(creatorName)}</button>
         </div>
 
         <div class="ride-bike">
@@ -2903,6 +3292,15 @@ async function renderRides(ridesFromSupabase) {
   // =======================================================
 
   container.innerHTML = html;
+
+  container.querySelectorAll('.ride-profile-link[data-profile-id]').forEach(function(button) {
+    const profile = creatorProfiles[button.dataset.profileId];
+    if (profile) {
+      button.addEventListener('click', function() {
+        openCommunityRiderProfile(profile);
+      });
+    }
+  });
 
 }
 // =========================================================
@@ -3471,6 +3869,9 @@ async function editProfileField(field) {
   // Поки дозволяємо редагувати тільки ці поля
   if (
     field !== 'bike' &&
+    field !== 'bike_model' &&
+    field !== 'bike_type' &&
+    field !== 'phone' &&
     field !== 'city' &&
     field !== 'about'
   ) {
@@ -3503,7 +3904,7 @@ async function editProfileField(field) {
     error: profileError
   } = await supabaseClient
     .from('profiles')
-    .select('bike, city, about')
+    .select('bike, bike_model, bike_type, phone, city, about')
     .eq('id', user.id)
     .single();
 
@@ -3519,6 +3920,9 @@ async function editProfileField(field) {
 
   const fieldNames = {
     bike: 'Мотоцикл',
+    bike_model: 'Модель мотоцикла',
+    bike_type: 'Тип мотоцикла (Чопер, Спортбайк, Ендуро тощо)',
+    phone: 'Мобільний телефон',
     city: 'Місто',
     about: 'Про себе'
   };
@@ -3602,6 +4006,8 @@ async function showProfileDetails() {
     .select(`
       nickname,
       bike,
+      bike_model,
+      bike_type,
       phone,
       city,
       about
@@ -3656,6 +4062,18 @@ async function showProfileDetails() {
 
 
       <div class="profile-details">
+
+        <button class="profile-detail-row" type="button" data-field="bike_model" onclick="editProfileField('bike_model')">
+          <span class="profile-detail-icon">🏍️</span>
+          <span class="profile-detail-content"><strong>Модель мотоцикла</strong><small>${escapeHtml(profileData.bike_model || 'Не вказано')}</small></span>
+          <span class="profile-menu-arrow">›</span>
+        </button>
+
+        <button class="profile-detail-row" type="button" data-field="bike_type" onclick="editProfileField('bike_type')">
+          <span class="profile-detail-icon">🏁</span>
+          <span class="profile-detail-content"><strong>Тип мотоцикла</strong><small>${escapeHtml(profileData.bike_type || 'Не вказано')}</small></span>
+          <span class="profile-menu-arrow">›</span>
+        </button>
 
         <button
           class="profile-detail-row"
@@ -4167,10 +4585,6 @@ function showSettings() {
 // AUTH
 // =========================================================
 
-let authMode =
-  'login';
-
-
 function openAuthModal() {
 
   const modal =
@@ -4545,23 +4959,16 @@ async function loginUser() {
 
       }
 
+      if (!result.data || !result.data.session) {
+        setAuthMessage('Сесію не створено. Перевірте, чи підтверджено email, і спробуйте ще раз.');
+        return;
+      }
+
 
       setAuthMessage(
         'Вхід виконано.',
         'success'
       );
-
-      setTimeout(
-        function() {
-
-          closeAuthModal();
-
-          showMap();
-
-        },
-        400
-      );
-
 
       return;
 
@@ -4753,6 +5160,8 @@ window.finishMotoMapsAuth = async function(callbackUrl) {
 
 
 async function logoutUser() {
+
+  console.trace('logoutUser() invoked by the app');
 
   if (supabaseClient) {
 
@@ -5149,6 +5558,9 @@ document.addEventListener(
 
     showMap();
     updateNotificationsBadge();
+    refreshMessagesBadge();
+    unreadMessagesPollTimer = setInterval(refreshMessagesBadge, 15000);
+    loadWeather();
 
     // Закриття модальних вікон
     // по кліку на затемнення.
@@ -5249,23 +5661,22 @@ document.addEventListener(
       supabaseClient.auth.onAuthStateChange(
         function(event, session) {
 
-          console.log(
-            'Auth:',
-            event
-          );
+          console.log('Auth:', event, 'session:', Boolean(session));
 
-          if (
-            event === 'SIGNED_IN' &&
-            session &&
-            session.user.app_metadata &&
-            session.user.app_metadata.provider === 'google'
-          ) {
-            // Відкладено, щоб не запускати Supabase-запити всередині auth callback.
+          // Don't call getSession() again for TOKEN_REFRESHED. That can
+          // create a refresh loop when the SDK is already refreshing a session.
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_OUT') {
+            setTimeout(refreshMessagesBadge, 0);
+          }
+
+          if (event === 'SIGNED_IN' && session) {
+            // Supabase callback відкладаємо, щоб не запускати запити всередині auth callback.
             setTimeout(function() {
               closeAuthModal();
               showMap();
               updateNotificationsBadge();
-              showSuccessMessage('Вхід через Google виконано.');
+              refreshMessagesBadge();
+              showSuccessMessage('Вхід виконано.');
             }, 0);
           }
 

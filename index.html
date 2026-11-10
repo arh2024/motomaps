@@ -56,17 +56,10 @@
 
 <div class="header-actions">
 
-  <!-- Перемикач світлої / темної теми -->
-<button
-  id="themeToggle"
-  class="theme-toggle"
-  type="button"
-  aria-label="Змінити тему"
-  title="Змінити тему"
-  onclick="toggleTheme()"
->
-  <span id="themeToggleIcon" aria-hidden="true">🌙</span>
-</button>
+  <button id="messagesButton" class="header-messages-button" type="button" title="Повідомлення" aria-label="Повідомлення" onclick="openMessagesInbox()">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 8.7 8.7 0 0 1-4-.97L3 21l1.97-5.5A8.5 8.5 0 1 1 21 11.5Z"/></svg>
+    <span id="messagesBadge" class="notifications-badge" hidden>0</span>
+  </button>
 
       
 <button
@@ -110,7 +103,7 @@
     >×</button>
     <div class="ride-detail-main-row">
       <strong id="rideDetailName" class="ride-detail-name"></strong>
-      <span class="ride-detail-creator">Створив: <b id="rideDetailCreator"></b></span>
+      <span class="ride-detail-creator">Створив: <button id="rideDetailCreator" class="ride-detail-creator-link" type="button"></button></span>
     </div>
     <div class="ride-detail-date-row">
       <span>📅 <b id="rideDetailDate"></b></span>
@@ -165,18 +158,25 @@
        ПОГОДА
        ===================================================== -->
 
-  <button
-    id="weatherButton"
-    class="weather-button"
-    type="button"
-    onclick="openWeather()"
-  >
-    <span id="weatherButtonIcon" class="weather-button-icon" aria-hidden="true">🌤️</span>
-    <span class="weather-button-copy">
-      <strong id="weatherButtonTemperature">--°C</strong>
-      <small><span id="weatherButtonWind">Вітер -- м/с</span><span class="weather-copy-separator">·</span><span id="weatherButtonHumidity">--%</span></small>
-    </span>
-  </button>
+  <div id="mapInfoWidgets" class="map-info-widgets">
+    <button
+      id="weatherButton"
+      class="weather-button"
+      type="button"
+      onclick="openWeather()"
+    >
+      <span id="weatherButtonIcon" class="weather-button-icon" aria-hidden="true">🌤️</span>
+      <span class="weather-button-copy">
+        <strong id="weatherButtonTemperature">--°C</strong>
+        <small><span id="weatherButtonWind">Вітер -- м/с</span><span class="weather-copy-separator">·</span><span id="weatherButtonHumidity">--%</span></small>
+      </span>
+    </button>
+    <button id="nearestRideWidget" class="nearest-ride-widget" type="button" onclick="openNearestRide()" aria-label="Відкрити найближчу мотопоїздку">
+      <span class="nearest-ride-label">НАЙБЛИЖЧА ПОЇЗДКА</span>
+      <strong id="nearestRideName">Завантажую поїздки…</strong>
+      <small id="nearestRideDateTime"></small>
+    </button>
+  </div>
 
 
   <!-- =====================================================
@@ -232,11 +232,54 @@
 
 </div>
 
+  <div id="communityFilters" class="community-filters" hidden>
+    <select id="communityCityFilter" aria-label="Фільтр за містом" onchange="filterCommunityRiders()">
+      <option value="">Усі міста</option>
+    </select>
+    <select id="communityTypeFilter" aria-label="Фільтр за типом мотоцикла" onchange="filterCommunityRiders()">
+      <option value="">Вибрати тип мотоцикла</option>
+    </select>
+  </div>
+
   <div id="ridesList" class="rides-list">
     <!-- Список мотопоїздок заповнюється через JavaScript -->
   </div>
 
 </section>
+
+<dialog id="communityRiderDialog" class="community-rider-dialog" aria-labelledby="communityRiderName">
+  <div class="community-rider-profile-card">
+    <button class="community-rider-profile-close" type="button" onclick="closeCommunityRiderProfile()" aria-label="Закрити профіль">×</button>
+    <div class="community-rider-profile-avatar">
+      <img id="communityRiderAvatar" alt="Аватар райдера" hidden>
+      <span id="communityRiderAvatarFallback" aria-hidden="true">🏍️</span>
+    </div>
+    <h2 id="communityRiderName"></h2>
+    <div class="community-rider-profile-info">
+      <p><span aria-hidden="true">🏍️</span><span id="communityRiderBike"></span></p>
+      <p><span aria-hidden="true">📍</span><span id="communityRiderCity"></span></p>
+    </div>
+    <div class="community-rider-profile-actions">
+      <button id="communityRiderMessage" class="community-contact-button" type="button" aria-label="Повідомлення" title="Особистий чат">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5Z"/></svg>
+      </button>
+      <button id="communityRiderCall" class="community-contact-button" type="button" aria-label="Зателефонувати" title="Зателефонувати">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3.1 5.2 2 2 0 0 1 5.1 3h3a2 2 0 0 1 2 1.7l.4 2.8a2 2 0 0 1-.6 1.7L8.1 11a16 16 0 0 0 4.9 4.9l1.8-1.8a2 2 0 0 1 1.7-.6l2.8.4a2 2 0 0 1 1.7 2z"/></svg>
+      </button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="messagesInboxDialog" class="community-chat-dialog messages-inbox-dialog" aria-labelledby="messagesInboxTitle">
+  <section class="community-chat-panel">
+    <header class="community-chat-header">
+      <span class="community-chat-back" aria-hidden="true"></span>
+      <div class="community-chat-heading"><strong id="messagesInboxTitle">Нові повідомлення</strong><small>Повідомлення від райдерів</small></div>
+      <button class="community-chat-close" type="button" onclick="closeMessagesInbox()" aria-label="Закрити">×</button>
+    </header>
+    <div id="messagesInboxList" class="messages-inbox-list" aria-live="polite"><p class="community-chat-empty">Завантажую повідомлення…</p></div>
+  </section>
+</dialog>
 
 <dialog id="communityChatDialog" class="community-chat-dialog" aria-labelledby="communityChatName">
   <div class="community-chat-panel">
