@@ -18,6 +18,9 @@ const SUPABASE_KEY =
   'sb_publishable_gfNOlLBzqvK-Sm9PfOzlWA_bDHq-MME';
 
 let supabaseClient = null;
+let riderPresenceChannel = null;
+let riderPresenceUserId = null;
+const onlineRiderIds = new Set();
 
 if (window.supabase) {
 
@@ -37,6 +40,62 @@ if (window.supabase) {
 
   console.log('Supabase підключено');
 
+}
+
+function refreshRiderPresenceView() {
+  document.querySelectorAll('.community-rider-presence-indicator').forEach(function(indicator) {
+    const isOnline = onlineRiderIds.has(indicator.dataset.riderId);
+    indicator.classList.toggle('is-online', isOnline);
+    indicator.querySelector('.community-rider-presence-label').textContent = isOnline ? 'В мережі' : 'Не в мережі';
+  });
+
+  const dialog = document.getElementById('communityRiderDialog');
+  const presence = document.getElementById('communityRiderPresence');
+  if (!dialog || !presence) return;
+  const riderId = dialog.dataset.riderId;
+  const isOnline = Boolean(riderId && onlineRiderIds.has(riderId));
+  presence.hidden = !riderId;
+  presence.classList.toggle('is-offline', Boolean(riderId && !isOnline));
+  if (presence.lastChild) presence.lastChild.textContent = isOnline ? 'В мережі' : 'Не в мережі';
+}
+
+function startRiderPresence(session) {
+  const userId = session && session.user ? String(session.user.id) : null;
+  if (userId === riderPresenceUserId && riderPresenceChannel) return;
+
+  const previousChannel = riderPresenceChannel;
+  riderPresenceChannel = null;
+  riderPresenceUserId = null;
+  onlineRiderIds.clear();
+  if (previousChannel && supabaseClient) supabaseClient.removeChannel(previousChannel);
+
+  if (!userId || !supabaseClient) {
+    refreshRiderPresenceView();
+    return;
+  }
+
+  riderPresenceUserId = userId;
+  const channel = supabaseClient.channel('moto-maps-online-riders', {
+    config: { presence: { key: userId } }
+  });
+  riderPresenceChannel = channel;
+  const syncOnlineRiders = function() {
+    if (riderPresenceChannel !== channel) return;
+    onlineRiderIds.clear();
+    Object.keys(channel.presenceState() || {}).forEach(function(id) { onlineRiderIds.add(String(id)); });
+    refreshRiderPresenceView();
+  };
+  channel
+    .on('presence', { event: 'sync' }, syncOnlineRiders)
+    .on('presence', { event: 'join' }, syncOnlineRiders)
+    .on('presence', { event: 'leave' }, syncOnlineRiders)
+    .subscribe(function(status) {
+      if (status === 'SUBSCRIBED' && riderPresenceChannel === channel) {
+        channel.track({ user_id: userId, online_at: new Date().toISOString() }).catch(function(error) {
+          console.warn('Не вдалося оновити онлайн-статус:', error);
+        });
+      }
+    });
 }
 
 
@@ -242,6 +301,7 @@ let directChatPollTimer = null;
 let directChatLoading = false;
 let unreadMessagesPollTimer = null;
 let activeRidePopup = null;
+let upcomingRidesExpiryTimer = null;
 
 let currentScreen = 'map';
 
@@ -930,11 +990,13 @@ function prepareRidesScreen(title, navItem) {
 }
 
 function showRides() {
-  const list = prepareRidesScreen('МОТОПОЇЗДКИ', 'routes');
+  clearTimeout(upcomingRidesExpiryTimer);
+  upcomingRidesExpiryTimer = null;
+  const list = prepareRidesScreen('МОЇ ПОЇЗДКИ', 'routes');
   if (!list) return;
 
   list.classList.remove('community-list');
-  loadRidesFromSupabase()
+  loadMyRidesFromSupabase()
     .then(function(ridesFromSupabase) {
       renderRides(ridesFromSupabase || []);
     })
@@ -944,16 +1006,19 @@ function showRides() {
     });
 }
 
-// Маршрути та спільнота показують живий перелік відкритих поїздок;
-// вибір поїздки відкриває її точку збору й доступні способи маршруту.
+// «Маршрути» показує всі відкриті поїздки, які ще не почалися.
+// Вибір поїздки відкриває її точку збору й доступні способи маршруту.
 function showRoutes() {
+  clearTimeout(upcomingRidesExpiryTimer);
+  upcomingRidesExpiryTimer = null;
   const list = prepareRidesScreen('МАРШРУТИ', 'routes');
   if (!list) return;
 
   list.classList.remove('community-list');
-  loadRidesFromSupabase()
+  loadUpcomingRidesFromSupabase()
     .then(function(ridesFromSupabase) {
       renderRides(ridesFromSupabase || []);
+      scheduleRideExpiryRefresh(ridesFromSupabase || []);
     })
     .catch(function(error) {
       console.error('Помилка завантаження маршрутів:', error);
@@ -962,13 +1027,22 @@ function showRoutes() {
 }
 
 function showCommunity() {
+  clearTimeout(upcomingRidesExpiryTimer);
+  upcomingRidesExpiryTimer = null;
   const list = prepareRidesScreen('СПІЛЬНОТА', 'community');
   if (!list) return;
 
   list.classList.add('community-list');
   list.innerHTML = '<div class="empty-state"><p>Завантажую зареєстрованих райдерів…</p></div>';
   loadCommunityRiders()
-    .then(function(riders) {
+    .then(async function(riders) {
+      let stats = {};
+      try {
+        stats = await loadRiderTripStats(riders.map(function(rider) { return rider.id; }));
+      } catch (error) {
+        console.error('Помилка завантаження статистики райдерів:', error);
+      }
+      riders.forEach(function(rider) { rider.tripStats = stats[rider.id] || null; });
       renderCommunityRiders(riders, list);
     })
     .catch(function(error) {
@@ -981,10 +1055,45 @@ async function loadCommunityRiders() {
   if (!supabaseClient) throw new Error('Supabase не підключено.');
   const { data, error } = await supabaseClient
     .from('profiles')
-    .select('id, nickname, bike, bike_model, bike_type, phone, city, avatar_url')
+    .select('id, nickname, bike, bike_model, bike_type, phone, city, avatar_url, club_name')
     .order('nickname', { ascending: true });
   if (error) throw error;
   return data || [];
+}
+
+async function loadRiderTripStats(riderIds) {
+  const ids = [...new Set((riderIds || []).filter(Boolean).map(String))];
+  const result = Object.fromEntries(ids.map(function(id) { return [id, { created: 0, joined: 0 }]; }));
+  if (!supabaseClient || !ids.length) return result;
+
+  async function loadRows(table, column, isJoined) {
+    const rows = [];
+    const pageSize = 1000;
+    for (let offset = 0; ; offset += pageSize) {
+      let query = supabaseClient.from(table).select(column).in(column, ids).range(offset, offset + pageSize - 1);
+      if (isJoined) query = query.eq('status', 'joined');
+      const { data, error } = await query;
+      if (error) throw error;
+      rows.push(...(data || []));
+      if (!data || data.length < pageSize) break;
+    }
+    return rows;
+  }
+
+  const [createdRows, joinedRows] = await Promise.all([
+    loadRows('rides', 'creator_id', false),
+    loadRows('ride_participants', 'user_id', true)
+  ]);
+
+  createdRows.forEach(function(row) {
+    const key = String(row.creator_id || '');
+    if (result[key]) result[key].created += 1;
+  });
+  joinedRows.forEach(function(row) {
+    const key = String(row.user_id || '');
+    if (result[key]) result[key].joined += 1;
+  });
+  return result;
 }
 
 function renderCommunityRiders(riders, list) {
@@ -1028,10 +1137,20 @@ function renderCommunityRiderCards(riders, list) {
     const nameRow = document.createElement('div');
     nameRow.className = 'community-rider-name-row';
     nameRow.append(avatar, name);
+    const presence = document.createElement('span');
+    presence.className = 'community-rider-presence-indicator';
+    presence.dataset.riderId = String(rider.id || '');
+    const isOnline = onlineRiderIds.has(presence.dataset.riderId);
+    presence.classList.toggle('is-online', isOnline);
+    presence.innerHTML = '<span class="community-rider-presence-dot" aria-hidden="true"></span><span class="community-rider-presence-label"></span>';
+    presence.querySelector('.community-rider-presence-label').textContent = isOnline ? 'В мережі' : 'Не в мережі';
     const bike = document.createElement('span');
     bike.className = 'community-rider-bike';
     bike.textContent = [rider.bike_model, rider.bike_type, rider.bike].filter(Boolean).join(' · ') || 'Мотоцикл не вказано';
-    identity.append(nameRow, bike);
+    const stats = document.createElement('span');
+    stats.className = 'community-rider-trip-stats';
+    stats.textContent = 'Створив: ' + (rider.tripStats?.created ?? '—') + ' · Приєднався: ' + (rider.tripStats?.joined ?? '—');
+    identity.append(nameRow, presence, bike, stats);
 
     const actions = document.createElement('div');
     actions.className = 'community-rider-actions';
@@ -1109,8 +1228,35 @@ function openCommunityRiderProfile(rider) {
   if (!dialog) return;
 
   document.getElementById('communityRiderName').textContent = rider.nickname || 'Moto Rider';
-  document.getElementById('communityRiderBike').textContent = [rider.bike_model, rider.bike_type, rider.bike].filter(Boolean).join(' · ') || 'Мотоцикл не вказано';
+  const motorcycle = [rider.bike_model || rider.bike, rider.bike_type && '(' + rider.bike_type + ')'].filter(Boolean).join(' ');
+  document.getElementById('communityRiderBike').textContent = motorcycle || 'Мотоцикл не вказано';
   document.getElementById('communityRiderCity').textContent = rider.city || 'Місто не вказано';
+
+  dialog.dataset.riderId = String(rider.id || '');
+  refreshRiderPresenceView();
+  const clubBadge = document.getElementById('communityRiderBadge');
+  const badgeText = rider.club_name || '';
+  clubBadge.textContent = badgeText;
+  clubBadge.hidden = !badgeText;
+
+  const createdCount = document.getElementById('communityRiderCreatedCount');
+  const joinedCount = document.getElementById('communityRiderJoinedCount');
+  createdCount.textContent = rider.tripStats ? rider.tripStats.created : '…';
+  joinedCount.textContent = rider.tripStats ? rider.tripStats.joined : '…';
+  if (!rider.tripStats && rider.id) {
+    loadRiderTripStats([rider.id]).then(function(stats) {
+      if (dialog.dataset.riderId !== String(rider.id)) return;
+      const riderStats = stats[String(rider.id)] || { created: 0, joined: 0 };
+      createdCount.textContent = riderStats.created;
+      joinedCount.textContent = riderStats.joined;
+    }).catch(function(error) {
+      console.error('Помилка завантаження статистики райдера:', error);
+      if (dialog.dataset.riderId === String(rider.id)) {
+        createdCount.textContent = '—';
+        joinedCount.textContent = '—';
+      }
+    });
+  }
 
   const avatar = document.getElementById('communityRiderAvatar');
   const fallback = document.getElementById('communityRiderAvatarFallback');
@@ -1135,16 +1281,17 @@ function openCommunityRiderProfile(rider) {
   };
 
   const callButton = document.getElementById('communityRiderCall');
+  const phone = String(rider.phone || '').replace(/[^\d+*#,;]/g, '');
   callButton.onclick = function() {
-    const phone = String(rider.phone || '').replace(/[^\d+*#,;]/g, '');
     if (!phone) {
       closeCommunityRiderProfile();
       showSuccessMessage('Користувач не надав номер телефону. Напишіть йому в особистий чат.');
       return;
     }
     closeCommunityRiderProfile();
-    window.location.href = 'tel:' + phone;
+      window.location.href = 'tel:' + phone;
   };
+  callButton.title = phone ? 'Зателефонувати' : 'Номер телефону не вказано';
 
   if (!dialog.dataset.backdropBound) {
     dialog.addEventListener('click', function(event) {
@@ -1433,122 +1580,178 @@ async function sendDirectMessage(event) {
   await loadDirectMessages();
 }
 async function joinRide(rideId) {
-
   if (!supabaseClient) {
-
-    alert(
-      'Supabase не підключено.'
-    );
-
+    alert('Supabase не підключено.');
     return;
-
   }
 
+  const buttons = getRideJoinButtons(rideId);
+  buttons.forEach(function(button) { button.disabled = true; });
 
-  const {
-    data: sessionData,
-    error: sessionError
-  } =
-    await supabaseClient.auth.getSession();
+  try {
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      alert('Потрібно увійти в акаунт.');
+      return;
+    }
 
-
-  if (
-    sessionError ||
-    !sessionData.session
-  ) {
-
-    alert(
-      'Потрібно увійти в акаунт.'
-    );
-
-    return;
-
-  }
-
-
-  const user =
-    sessionData.session.user;
-
-
-  const {
-    data: existingParticipant,
-    error: checkError
-  } =
-    await supabaseClient
+    const user = sessionData.session.user;
+    const { data: existingParticipant, error: checkError } = await supabaseClient
       .from('ride_participants')
       .select('id')
       .eq('ride_id', rideId)
       .eq('user_id', user.id)
       .maybeSingle();
 
+    if (checkError) {
+      console.error('Помилка перевірки участі:', checkError);
+      alert('Не вдалося перевірити участь.');
+      return;
+    }
 
-  if (checkError) {
+    if (existingParticipant) {
+      const { error: deleteError } = await supabaseClient
+        .from('ride_participants')
+        .delete()
+        .eq('id', existingParticipant.id);
 
-    console.error(
-      'Помилка перевірки участі:',
-      checkError
-    );
+      if (deleteError) {
+        console.error('Помилка скасування участі:', deleteError);
+        alert('Не вдалося скасувати участь у поїздці: ' + deleteError.message);
+        return;
+      }
+      setRideJoinButtonsState(rideId, false);
+    } else {
+      const { error: insertError } = await supabaseClient
+        .from('ride_participants')
+        .insert({ ride_id: rideId, user_id: user.id, status: 'joined' });
 
-    alert(
-      'Не вдалося перевірити участь.'
-    );
+      if (insertError) {
+        console.error('Помилка приєднання до мотопоїздки:', insertError);
+        alert('Не вдалося приєднатися до мотопоїздки: ' + insertError.message);
+        return;
+      }
+      setRideJoinButtonsState(rideId, true);
+    }
 
+    // Keep the currently open rides view consistent after joining or cancelling.
+    const ridesTitle = document.querySelector('#rides .rides-screen-header h1');
+    const isMyRidesView = ridesTitle && ridesTitle.textContent.trim() === 'МОЇ ПОЇЗДКИ';
+    const reloadRides = isMyRidesView ? loadMyRidesFromSupabase : loadUpcomingRidesFromSupabase;
+    reloadRides().then(function(rides) {
+      renderRides(rides || []);
+      if (!isMyRidesView) scheduleRideExpiryRefresh(rides || []);
+    });
+  } finally {
+    getRideJoinButtons(rideId).forEach(function(button) { button.disabled = false; });
+  }
+}
+
+async function deleteRide(rideId) {
+  if (!supabaseClient) {
+    alert('Supabase не підключено.');
     return;
-
   }
 
+  const confirmed = window.confirm('Видалити створену тобою поїздку? Учасники також втратять до неї доступ.');
+  if (!confirmed) return;
 
-  if (existingParticipant) {
+  try {
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      alert('Потрібно увійти в акаунт.');
+      return;
+    }
 
-    alert(
-      'Ви вже приєдналися до цієї мотопоїздки.'
-    );
+    const userId = sessionData.session.user.id;
+    const { data: deletedRide, error } = await supabaseClient
+      .from('rides')
+      .delete()
+      .eq('id', rideId)
+      .eq('creator_id', userId)
+      .select('id')
+      .maybeSingle();
 
-    return;
+    if (error) throw error;
+    if (!deletedRide) {
+      alert('Поїздку не видалено. Переконайся, що ти її створив, і перевір доступ на видалення у Supabase.');
+      return;
+    }
 
+    const remainingRides = getRides().filter(function(ride) {
+      return String(ride.id) !== String(rideId);
+    });
+    saveRides(remainingRides);
+
+    if (activeRidePopup) {
+      activeRidePopup.remove();
+      activeRidePopup = null;
+    }
+    closeRideDetailSheet();
+    renderRideMarkers();
+    await loadRideMarkersFromSupabase();
+
+    const title = document.querySelector('#rides .rides-screen-header h1');
+    if (title) {
+      if (title.textContent.trim() === 'МОЇ ПОЇЗДКИ') showRides();
+      else if (title.textContent.trim() === 'МАРШРУТИ') showRoutes();
+    }
+
+    showSuccessMessage('Мотопоїздку видалено.');
+  } catch (error) {
+    console.error('Помилка видалення мотопоїздки:', error);
+    alert('Не вдалося видалити поїздку. Перевір політику видалення для таблиці rides у Supabase.');
   }
+}
 
+function getRideJoinButtons(rideId) {
+  return Array.from(document.querySelectorAll('.ride-join-toggle')).filter(function(button) {
+    return button.dataset.rideId === String(rideId);
+  });
+}
 
-  const {
-    error: insertError
-  } =
-    await supabaseClient
+function rideJoinButtonMarkup(joined) {
+  return joined
+    ? '<svg class="ride-popup-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg><span>Відмінити</span>'
+    : '<svg class="ride-popup-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span>Приєднатися</span>';
+}
+
+function setRideJoinButtonsState(rideId, joined) {
+  getRideJoinButtons(rideId).forEach(function(button) {
+    button.dataset.joined = String(joined);
+    button.classList.toggle('is-joined', joined);
+    button.setAttribute('aria-label', joined ? 'Відмінити участь у поїздці' : 'Приєднатися до поїздки');
+    button.innerHTML = rideJoinButtonMarkup(joined);
+  });
+}
+
+async function syncRideJoinButton(rideId) {
+  if (!supabaseClient) return;
+  getRideJoinButtons(rideId).forEach(function(button) { button.disabled = true; });
+
+  try {
+    const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      setRideJoinButtonsState(rideId, false);
+      return;
+    }
+
+    const { data, error } = await supabaseClient
       .from('ride_participants')
-      .insert({
+      .select('id')
+      .eq('ride_id', rideId)
+      .eq('user_id', sessionData.session.user.id)
+      .maybeSingle();
 
-        ride_id:
-          rideId,
+    if (error) {
+      console.error('Помилка перевірки участі:', error);
+      return;
+    }
 
-        user_id:
-          user.id,
-
-        status:
-          'joined'
-
-      });
-
-
-  if (insertError) {
-
-    console.error(
-      'Помилка приєднання до мотопоїздки:',
-      insertError
-    );
-
-    alert(
-      'Не вдалося приєднатися до мотопоїздки: ' +
-      insertError.message
-    );
-
-    return;
-
+    setRideJoinButtonsState(rideId, Boolean(data));
+  } finally {
+    getRideJoinButtons(rideId).forEach(function(button) { button.disabled = false; });
   }
-
-
-  alert(
-    '🏍️ Ви приєдналися до мотопоїздки!'
-  );
-
 }
 
 function goBack() {
@@ -1824,10 +2027,13 @@ map.on(
 
 async function searchMeetingAddress() {
   const input = document.getElementById('rideAddress');
+  const houseInput = document.getElementById('rideHouseNumber');
   const results = document.getElementById('addressResults');
   if (!input || !results) return;
 
-  const query = input.value.trim();
+  const addressQuery = input.value.trim();
+  const requestedHouseNumber = houseInput ? houseInput.value.trim() : '';
+  const query = [addressQuery, requestedHouseNumber].filter(Boolean).join(' ');
   const requestId = ++addressSearchSerial;
   if (addressSearchController) addressSearchController.abort();
 
@@ -1842,18 +2048,14 @@ async function searchMeetingAddress() {
 
   try {
     addressSearchController = new AbortController();
-    // Prefer Russian labels when the query is typed in Russian; Photon searches
-    // street names in either alphabet, while `lang` controls result names.
-    const resultLanguage = /[ыэъё]|\b(улица|переулок|проспект|площадь|набережная|шоссе|район)\b/i.test(query)
-      ? 'ru'
-      : 'uk';
+    const mapCenter = map.getCenter();
     const url = 'https://photon.komoot.io/api/?' + new URLSearchParams({
       q: query,
       limit: '5',
-      lang: resultLanguage,
-      lat: '47.8388',
-      lon: '35.1396',
-      zoom: '12',
+      countrycode: 'UA',
+      lat: String(mapCenter.lat),
+      lon: String(mapCenter.lng),
+      zoom: String(Math.round(map.getZoom())),
       location_bias_scale: '0.2'
     });
     const response = await fetch(url, {
@@ -1878,10 +2080,17 @@ async function searchMeetingAddress() {
       const coordinates = feature.geometry && feature.geometry.coordinates;
       if (!Array.isArray(coordinates) || coordinates.length < 2) return;
 
-      const street = [properties.street, properties.housenumber].filter(Boolean).join(' ');
+      const street = properties.street || '';
+      const houseNumber = properties.housenumber || requestedHouseNumber;
       const placeName = properties.name && properties.name !== street ? properties.name : '';
+      const streetWithNumber = [street || placeName || properties.suburb, houseNumber].filter(Boolean).join(' ');
       const locality = properties.city || properties.town || properties.village || properties.municipality || properties.district || properties.county;
-      const label = [street || placeName || properties.suburb, locality, properties.state]
+      const addressBase = [street || placeName || properties.suburb, locality, properties.state]
+        .filter(function(value, index, values) {
+          return value && values.indexOf(value) === index;
+        })
+        .join(', ');
+      const label = [streetWithNumber || placeName || properties.suburb, locality, properties.state]
         .filter(function(value, index, values) {
           return value && values.indexOf(value) === index;
         })
@@ -1889,7 +2098,9 @@ async function searchMeetingAddress() {
       const place = {
         lat: coordinates[1],
         lon: coordinates[0],
-        display_name: label
+        display_name: label,
+        street_address: addressBase,
+        house_number: houseNumber
       };
 
       const button = document.createElement('button');
@@ -1952,6 +2163,8 @@ function selectAddressResult(
       'rideAddress'
     );
 
+  const houseInput = document.getElementById('rideHouseNumber');
+
 
   const results =
     document.getElementById(
@@ -1961,8 +2174,12 @@ function selectAddressResult(
 
   if (input) {
 
-    input.value =
-      label;
+    input.value = place.street_address || label;
+
+  }
+
+  if (houseInput) {
+    houseInput.value = place.house_number || '';
 
   }
 
@@ -2036,6 +2253,100 @@ async function loadRidesFromSupabase() {
 
   return data || [];
 
+}
+
+async function loadMyRidesFromSupabase() {
+  if (!supabaseClient) return [];
+
+  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+  if (sessionError || !sessionData.session) return [];
+
+  const userId = sessionData.session.user.id;
+  const [rides, participantResult] = await Promise.all([
+    loadRidesFromSupabase(),
+    supabaseClient
+      .from('ride_participants')
+      .select('ride_id')
+      .eq('user_id', userId)
+      .eq('status', 'joined')
+  ]);
+
+  if (participantResult.error) {
+    console.error('Не вдалося завантажити поїздки, до яких приєднався користувач:', participantResult.error);
+  }
+
+  const joinedRideIds = new Set(
+    (participantResult.data || []).map(function(row) { return String(row.ride_id); })
+  );
+
+  return rides.filter(function(ride) {
+    return ride.creator_id === userId || joinedRideIds.has(String(ride.id));
+  });
+}
+
+function getRideScheduledTimestamp(ride) {
+  const dateValue = ride.ride_date || ride.date;
+  if (!dateValue) return null;
+
+  const dateParts = String(dateValue).slice(0, 10).split('-').map(Number);
+  if (dateParts.length !== 3 || dateParts.some(function(part) { return !Number.isFinite(part); })) {
+    return null;
+  }
+
+  const timeParts = String(ride.ride_time || ride.time || '23:59').split(':').map(Number);
+  const hour = Number.isFinite(timeParts[0]) ? timeParts[0] : 23;
+  const minute = Number.isFinite(timeParts[1]) ? timeParts[1] : 59;
+  const second = Number.isFinite(timeParts[2]) ? timeParts[2] : 0;
+  const timestamp = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], hour, minute, second).getTime();
+
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+async function loadUpcomingRidesFromSupabase() {
+  const now = Date.now();
+  const rides = await loadRidesFromSupabase();
+
+  return rides
+    .map(function(ride) {
+      return { ride: ride, scheduledAt: getRideScheduledTimestamp(ride) };
+    })
+    .filter(function(item) {
+      return item.scheduledAt !== null && item.scheduledAt >= now;
+    })
+    .sort(function(a, b) {
+      return a.scheduledAt - b.scheduledAt;
+    })
+    .map(function(item) {
+      return item.ride;
+    });
+}
+
+function scheduleRideExpiryRefresh(rides) {
+  clearTimeout(upcomingRidesExpiryTimer);
+  upcomingRidesExpiryTimer = null;
+
+  const now = Date.now();
+  const nextExpiry = rides
+    .map(getRideScheduledTimestamp)
+    .filter(function(timestamp) { return timestamp !== null && timestamp > now; })
+    .sort(function(a, b) { return a - b; })[0];
+
+  if (!nextExpiry) return;
+
+  const delay = Math.min(Math.max(nextExpiry - now + 1000, 1000), 2147483647);
+  upcomingRidesExpiryTimer = setTimeout(function() {
+    const ridesTitle = document.querySelector('#rides .rides-screen-header h1');
+    if (currentScreen !== 'rides' || !ridesTitle || ridesTitle.textContent.trim() !== 'МАРШРУТИ') return;
+
+    loadUpcomingRidesFromSupabase()
+      .then(function(upcomingRides) {
+        renderRides(upcomingRides || []);
+        scheduleRideExpiryRefresh(upcomingRides || []);
+      })
+      .catch(function(error) {
+        console.error('Помилка оновлення майбутніх поїздок:', error);
+      });
+  }, delay);
 }
 
 
@@ -2269,7 +2580,7 @@ const {
   error: profileError
 } = await supabaseClient
   .from('profiles')
-  .select('id, nickname, bike, phone, city, avatar_url')
+  .select('id, nickname, bike, phone, city, avatar_url, club_name')
   .eq('id', user.id)
   .single();
 
@@ -2461,44 +2772,84 @@ function showRideMapPopup(ride, longitude, latitude) {
   }
 
   const content = document.createElement('div');
-  content.className = 'ride-map-popup';
+  content.className = 'ride-map-popup ride-map-popup-card';
 
-  const creator = document.createElement('strong');
+  const organizer = document.createElement('div');
+  organizer.className = 'ride-popup-organizer';
+  const avatarWrap = document.createElement('span');
+  avatarWrap.className = 'ride-popup-avatar-wrap';
+  const avatarFallback = document.createElement('span');
+  avatarFallback.className = 'ride-popup-avatar-fallback';
+  avatarFallback.textContent = '🏍️';
+  avatarFallback.setAttribute('aria-hidden', 'true');
+  avatarWrap.appendChild(avatarFallback);
+  if (ride.creatorProfile && ride.creatorProfile.avatar_url) {
+    const avatar = document.createElement('img');
+    avatar.className = 'ride-popup-avatar';
+    avatar.alt = '';
+    avatar.src = ride.creatorProfile.avatar_url;
+    avatar.addEventListener('error', function() { avatar.remove(); }, { once: true });
+    avatarWrap.appendChild(avatar);
+  }
+  const motoTag = document.createElement('span');
+  motoTag.className = 'ride-popup-moto-tag';
+  motoTag.textContent = 'moto';
+  avatarWrap.appendChild(motoTag);
+
+  const organizerInfo = document.createElement('div');
+  organizerInfo.className = 'ride-popup-organizer-info';
+  let creator = document.createElement('strong');
   creator.className = 'ride-map-popup-creator';
-  creator.textContent = ride.creatorName || ride.creator || 'Moto Rider';
-  let creatorElement = creator;
+  creator.textContent = (ride.creatorProfile && ride.creatorProfile.nickname) || ride.creatorName || ride.creator || 'Moto Rider';
   if (ride.creatorProfile && ride.creatorProfile.id) {
-    creatorElement = document.createElement('button');
-    creatorElement.type = 'button';
-    creatorElement.className = 'ride-map-popup-creator';
-    creatorElement.textContent = ride.creatorProfile.nickname || ride.creatorName || 'Moto Rider';
-    creatorElement.setAttribute('aria-label', 'Відкрити профіль райдера');
-    creatorElement.addEventListener('click', function(event) {
+    const creatorButton = document.createElement('button');
+    creatorButton.type = 'button';
+    creatorButton.className = 'ride-map-popup-creator';
+    creatorButton.textContent = creator.textContent;
+    creatorButton.setAttribute('aria-label', 'Відкрити профіль райдера');
+    creatorButton.addEventListener('click', function(event) {
       event.stopPropagation();
       if (activeRidePopup) activeRidePopup.remove();
       openCommunityRiderProfile(ride.creatorProfile);
     });
+    creator = creatorButton;
   }
+  const kind = document.createElement('span');
+  kind.className = 'ride-popup-kind';
+  kind.textContent = ride.name || 'Мотопоїздка';
+  organizerInfo.append(creator, kind);
+  organizer.append(avatarWrap, organizerInfo);
 
-  const details = document.createElement('div');
-  details.className = 'ride-map-popup-details';
+  const dateTime = document.createElement('div');
+  dateTime.className = 'ride-map-popup-datetime';
+  dateTime.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  const dateInfo = document.createElement('div');
+  const dateValue = ride.ride_date || ride.date;
+  const timeValue = ride.ride_time || ride.time;
+  const timeText = document.createElement('strong');
+  timeText.textContent = dateValue && timeValue ? getRideRelativeDateLabel(dateValue) + ' о ' + String(timeValue).slice(0, 5) : (timeValue || 'Час не вказано');
+  const dateText = document.createElement('span');
+  dateText.textContent = dateValue ? formatRideLongDate(dateValue) : 'Дата не вказана';
+  dateInfo.append(timeText, dateText);
+  dateTime.appendChild(dateInfo);
 
-  const date = document.createElement('span');
-  date.textContent = ride.ride_date || ride.date
-    ? formatDate(ride.ride_date || ride.date)
-    : 'Дата не вказана';
+  const viewRide = document.createElement('button');
+  viewRide.type = 'button';
+  viewRide.className = 'ride-map-popup-view';
+  viewRide.innerHTML = '<span>Переглянути поїздку</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>';
+  viewRide.addEventListener('click', function(event) {
+    event.stopPropagation();
+    if (activeRidePopup) activeRidePopup.remove();
+    showRideDetailSheet(ride);
+  });
 
-  const time = document.createElement('span');
-  time.textContent = ride.ride_time || ride.time || 'Час не вказано';
-
-  details.append(date, time);
-  content.append(creatorElement, details);
+  content.append(organizer, dateTime, viewRide);
 
   activeRidePopup = new maplibregl.Popup({
-    closeButton: false,
+    closeButton: true,
     closeOnClick: true,
     offset: 14,
-    maxWidth: '260px',
+    maxWidth: '280px',
     className: 'ride-map-popup-container'
   })
     .setLngLat([longitude, latitude])
@@ -2508,6 +2859,26 @@ function showRideMapPopup(ride, longitude, latitude) {
   activeRidePopup.on('close', function() {
     activeRidePopup = null;
   });
+}
+
+function getRideRelativeDateLabel(dateValue) {
+  const rideDate = new Date(String(dateValue) + 'T00:00:00');
+  if (!Number.isFinite(rideDate.getTime())) return '';
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+  const sameDay = function(a, b) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  };
+  if (sameDay(rideDate, today)) return 'Сьогодні';
+  if (sameDay(rideDate, tomorrow)) return 'Завтра';
+  return new Intl.DateTimeFormat('uk-UA', { weekday: 'short' }).format(rideDate);
+}
+
+function formatRideLongDate(dateValue) {
+  const rideDate = new Date(String(dateValue) + 'T00:00:00');
+  if (!Number.isFinite(rideDate.getTime())) return formatDate(dateValue);
+  return new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'short', year: 'numeric' }).format(rideDate);
 }
 
 function showRideDetailSheet(ride) {
@@ -2544,9 +2915,8 @@ const rideTime = ride.ride_time || ride.time;
 
   const actions = document.getElementById('rideDetailActions');
   actions.innerHTML =
-    `<button type="button" class="ride-popup-action ride-popup-join" ${ride.id ? '' : 'disabled'}>` +
-      `<svg class="ride-popup-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>` +
-      `<span>Приєднатися</span>` +
+    `<button type="button" class="ride-popup-action ride-popup-join ride-join-toggle" data-ride-id="${escapeHtml(ride.id || '')}" ${ride.id ? '' : 'disabled'}>` +
+      `${rideJoinButtonMarkup(false)}` +
     `</button>` +
     `<button type="button" class="ride-popup-action ride-popup-google" title="Прокласти маршрут у Google Maps" aria-label="Прокласти маршрут у Google Maps">` +
       `<span class="ride-provider-mark ride-provider-google" aria-hidden="true">G</span>` +
@@ -2555,7 +2925,7 @@ const rideTime = ride.ride_time || ride.time;
       `<span class="ride-provider-mark ride-provider-moto" aria-hidden="true">MM</span>` +
     `</button>`;
 
-  const joinButton = actions.querySelector('.ride-popup-join');
+  const joinButton = actions.querySelector('.ride-join-toggle');
   if (joinButton && ride.id) {
     joinButton.addEventListener('click', function() {
       joinRide(ride.id);
@@ -2581,6 +2951,7 @@ const rideTime = ride.ride_time || ride.time;
 
   sheet.hidden = false;
   sheet.setAttribute('aria-hidden', 'false');
+  if (ride.id) syncRideJoinButton(ride.id);
   requestAnimationFrame(function() {
     sheet.classList.add('is-open');
   });
@@ -2638,7 +3009,7 @@ async function loadRideMarkersFromSupabase() {
   if (creatorIds.length) {
     const { data: profiles, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('id, nickname, bike, phone, city, avatar_url')
+      .select('id, nickname, bike, phone, city, avatar_url, club_name')
       .in('id', creatorIds);
 
     if (profileError) {
@@ -2893,6 +3264,14 @@ async function renderRides(ridesFromSupabase) {
 
   let participantRows = [];
   let creatorProfiles = {};
+  let currentUserId = null;
+
+  if (supabaseClient) {
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    currentUserId = sessionData && sessionData.session
+      ? sessionData.session.user.id
+      : null;
+  }
 
   // =======================================================
   // УЧАСНИКИ
@@ -2971,7 +3350,8 @@ async function renderRides(ridesFromSupabase) {
           bike,
           phone,
           city,
-          avatar_url
+          avatar_url,
+          club_name
         `)
         .in(
           'id',
@@ -3006,6 +3386,12 @@ async function renderRides(ridesFromSupabase) {
   // =======================================================
 
   if (!rides.length) {
+    const ridesTitle = document.querySelector('#rides .rides-screen-header h1');
+    const isMyRidesView = ridesTitle && ridesTitle.textContent.trim() === 'МОЇ ПОЇЗДКИ';
+    const emptyTitle = isMyRidesView ? 'Поки немає твоїх поїздок' : 'Майбутніх мотопоїздок поки немає';
+    const emptyDescription = isMyRidesView
+      ? 'Тут будуть поїздки, які ти створив або до яких приєднався.'
+      : 'У вкладці з’являться відкриті поїздки з майбутньою датою.';
 
     container.innerHTML = `
       <div class="empty-state">
@@ -3015,11 +3401,11 @@ async function renderRides(ridesFromSupabase) {
         </div>
 
         <h3>
-          Поки немає мотопоїздок
+          ${emptyTitle}
         </h3>
 
         <p>
-          Створи першу поїздку та збери свою компанію.
+          ${emptyDescription}
         </p>
 
         <button
@@ -3053,6 +3439,9 @@ async function renderRides(ridesFromSupabase) {
 
     const ridersCount =
       participants.length;
+    const isCurrentUserJoined = participants.some(function(item) {
+      return item.user_id === currentUserId;
+    });
 
     // -----------------------------------------------------
     // ІМЕНА УЧАСНИКІВ
@@ -3209,11 +3598,14 @@ async function renderRides(ridesFromSupabase) {
           </button>
 
           <button
-            class="ride-action"
+            class="ride-action ride-join-toggle ${isCurrentUserJoined ? 'is-joined' : ''}"
             type="button"
+            data-ride-id="${escapeHtml(ride.id)}"
+            data-joined="${isCurrentUserJoined}"
+            aria-label="${isCurrentUserJoined ? 'Відмінити участь у поїздці' : 'Приєднатися до поїздки'}"
             onclick="joinRide('${ride.id}')"
           >
-            🏍️ Приєднатися
+            ${rideJoinButtonMarkup(isCurrentUserJoined)}
           </button>
 
           <button
@@ -3232,6 +3624,16 @@ async function renderRides(ridesFromSupabase) {
           >
             🧭 Маршрут
           </button>
+
+          ${currentUserId && String(ride.creator_id) === String(currentUserId) ? `
+            <button
+              class="ride-action ride-delete-action"
+              type="button"
+              onclick="deleteRide('${escapeHtml(ride.id)}')"
+            >
+              🗑️ Видалити поїздку
+            </button>
+          ` : ''}
 
         </div>
 
@@ -3826,6 +4228,7 @@ async function editProfileField(field) {
     field !== 'bike_type' &&
     field !== 'phone' &&
     field !== 'city' &&
+    field !== 'club_name' &&
     field !== 'about'
   ) {
     alert('Для цього поля ще потрібно додати підтвердження.');
@@ -3857,7 +4260,7 @@ async function editProfileField(field) {
     error: profileError
   } = await supabaseClient
     .from('profiles')
-    .select('bike, bike_model, bike_type, phone, city, about')
+    .select('bike, bike_model, bike_type, phone, city, club_name, about')
     .eq('id', user.id)
     .single();
 
@@ -3877,6 +4280,7 @@ async function editProfileField(field) {
     bike_type: 'Тип мотоцикла (Чопер, Спортбайк, Ендуро тощо)',
     phone: 'Мобільний телефон',
     city: 'Місто',
+    club_name: 'Мотоклуб',
     about: 'Про себе'
   };
 
@@ -3892,7 +4296,14 @@ async function editProfileField(field) {
     return;
   }
 
-  const value = newValue.trim();
+  let value = newValue.trim();
+  if (field === 'phone' && value) {
+    value = normalizeUkrainePhone(value);
+    if (!value) {
+      alert('Введіть український номер у форматі +380 67 123 45 67.');
+      return;
+    }
+  }
 
   const {
     error: updateError
@@ -3963,6 +4374,7 @@ async function showProfileDetails() {
       bike_type,
       phone,
       city,
+      club_name,
       about
     `)
     .eq('id', user.id)
@@ -4157,6 +4569,22 @@ async function showProfileDetails() {
           <span class="profile-menu-arrow">
             ›
           </span>
+
+        </button>
+
+        <button
+          class="profile-detail-row"
+          type="button"
+          data-field="club_name"
+          onclick="editProfileField('club_name')"
+        >
+
+          <span class="profile-detail-icon">🐺</span>
+          <span class="profile-detail-content">
+            <strong>Мотоклуб</strong>
+            <small>${escapeHtml(profileData.club_name || 'Не вказано')}</small>
+          </span>
+          <span class="profile-menu-arrow">›</span>
 
         </button>
 
@@ -4582,6 +5010,11 @@ function showLoginForm() {
   authMode =
     'login';
 
+  document.getElementById('authTabs').style.display = 'grid';
+  document.getElementById('authForgotPassword').style.display = 'block';
+  document.getElementById('authPasswordLabel').textContent = 'Пароль';
+  document.getElementById('authPassword').autocomplete = 'current-password';
+
 
   document
     .getElementById(
@@ -4647,6 +5080,11 @@ function showRegisterForm() {
   authMode =
     'register';
 
+  document.getElementById('authTabs').style.display = 'grid';
+  document.getElementById('authForgotPassword').style.display = 'none';
+  document.getElementById('authPasswordLabel').textContent = 'Пароль';
+  document.getElementById('authPassword').autocomplete = 'new-password';
+
 
   document
     .getElementById(
@@ -4706,6 +5144,22 @@ function showRegisterForm() {
 
 }
 
+function showResetPasswordForm() {
+  authMode = 'reset';
+  document.getElementById('authTabs').style.display = 'none';
+  document.getElementById('authPhoneGroup').style.display = 'none';
+  document.getElementById('authPasswordConfirmGroup').style.display = 'block';
+  document.getElementById('authForgotPassword').style.display = 'none';
+  document.getElementById('authPasswordLabel').textContent = 'Новий пароль';
+  document.getElementById('authPassword').autocomplete = 'new-password';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authPasswordConfirm').value = '';
+  document.getElementById('authSubmitButton').textContent = 'Зберегти новий пароль';
+  document.getElementById('authModalTitle').textContent = 'Відновлення пароля';
+  document.getElementById('authModalDescription').textContent = 'Введи та підтвердь новий пароль.';
+  clearAuthMessage();
+}
+
 
 function setAuthMessage(
   message,
@@ -4750,6 +5204,32 @@ function clearAuthMessage() {
 
 }
 
+async function requestPasswordReset() {
+  if (!supabaseClient) {
+    setAuthMessage('Supabase недоступний.');
+    return;
+  }
+
+  const email = document.getElementById('authEmail').value.trim();
+  if (!email) {
+    setAuthMessage('Спочатку введіть email, на який зареєстрований акаунт.');
+    document.getElementById('authEmail').focus();
+    return;
+  }
+
+  try {
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo
+    });
+    if (error) throw error;
+    setAuthMessage('Якщо акаунт із цим email існує, на нього надіслано посилання для зміни пароля.', 'success');
+  } catch (error) {
+    console.error('Помилка запиту на відновлення пароля:', error);
+    setAuthMessage(error.message || 'Не вдалося надіслати лист для відновлення пароля.');
+  }
+}
+
 
 // =========================================================
 // PHONE FORMAT
@@ -4758,6 +5238,8 @@ function clearAuthMessage() {
 function formatUkrainePhone(
   value
 ) {
+
+  if (!String(value || '').trim()) return '';
 
   let digits =
     String(value)
@@ -4769,63 +5251,68 @@ function formatUkrainePhone(
     digits =
       digits.substring(3);
 
-  }
-
-
-  if (digits.startsWith('38')) {
+  } else if (digits.startsWith('38')) {
 
     digits =
       digits.substring(2);
 
   }
 
+  if (digits.startsWith('0')) {
+    digits = digits.substring(1);
+  }
 
   digits =
-    digits.substring(0, 10);
+    digits.substring(0, 9);
 
 
   let result =
-    '+38';
+    '+380';
 
 
   if (digits.length > 0) {
 
     result +=
       ' ' +
-      digits.substring(0, 3);
+      digits.substring(0, 2);
 
   }
 
 
-  if (digits.length > 3) {
+  if (digits.length > 2) {
 
     result +=
       ' ' +
-      digits.substring(3, 6);
+      digits.substring(2, 5);
 
   }
 
 
-  if (digits.length > 6) {
+  if (digits.length > 5) {
 
     result +=
       ' ' +
-      digits.substring(6, 8);
+      digits.substring(5, 7);
 
   }
 
 
-  if (digits.length > 8) {
+  if (digits.length > 7) {
 
     result +=
       ' ' +
-      digits.substring(8, 10);
+      digits.substring(7, 9);
 
   }
 
 
   return result;
 
+}
+
+function normalizeUkrainePhone(value) {
+  const formatted = formatUkrainePhone(value);
+  return formatted.replace(/\D/g, '').length === 12 ? formatted : null;
 }
 
 
@@ -4868,6 +5355,29 @@ async function loginUser() {
     document.getElementById(
       'authPassword'
     ).value;
+
+  if (authMode === 'reset') {
+    const confirmPassword = document.getElementById('authPasswordConfirm').value;
+    if (password.length < 6) {
+      setAuthMessage('Новий пароль має містити щонайменше 6 символів.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setAuthMessage('Паролі не збігаються.');
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient.auth.updateUser({ password: password });
+      if (error) throw error;
+      closeAuthModal();
+      showSuccessMessage('Пароль успішно змінено.');
+    } catch (error) {
+      console.error('Помилка зміни пароля:', error);
+      setAuthMessage(error.message || 'Не вдалося змінити пароль. Відкрий посилання з листа ще раз.');
+    }
+    return;
+  }
 
 
   if (!email) {
@@ -4928,10 +5438,18 @@ async function loginUser() {
     }
 
 
-    const phone =
+    let phone =
       document.getElementById(
         'authPhone'
       ).value.trim();
+
+    if (phone) {
+      phone = normalizeUkrainePhone(phone);
+      if (!phone) {
+        setAuthMessage('Введіть український номер у форматі +380 67 123 45 67.');
+        return;
+      }
+    }
 
 
     const confirmPassword =
@@ -5589,8 +6107,9 @@ document.addEventListener(
     // Enter у пошуку адреси.
 
     const rideAddress = document.getElementById('rideAddress');
+    const rideHouseNumber = document.getElementById('rideHouseNumber');
     if (rideAddress) {
-      rideAddress.addEventListener('input', function() {
+      const handleMeetingAddressInput = function() {
         meetingLocation = null;
         if (meetingMarker) {
           meetingMarker.remove();
@@ -5611,15 +6130,18 @@ document.addEventListener(
           return;
         }
 
-        addressSearchTimer = setTimeout(searchMeetingAddress, 300);
-      });
+        addressSearchTimer = setTimeout(searchMeetingAddress, 400);
+      };
 
-      rideAddress.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          clearTimeout(addressSearchTimer);
-          searchMeetingAddress();
-        }
+      [rideAddress, rideHouseNumber].filter(Boolean).forEach(function(input) {
+        input.addEventListener('input', handleMeetingAddressInput);
+        input.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            clearTimeout(addressSearchTimer);
+            searchMeetingAddress();
+          }
+        });
       });
     }
 
@@ -5632,6 +6154,17 @@ document.addEventListener(
         function(event, session) {
 
           console.log('Auth:', event, 'session:', Boolean(session));
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+            startRiderPresence(session);
+          }
+
+          if (event === 'PASSWORD_RECOVERY') {
+            setTimeout(function() {
+              const modal = document.getElementById('authModal');
+              if (modal) modal.style.display = 'flex';
+              showResetPasswordForm();
+            }, 0);
+          }
 
           // Don't call getSession() again for TOKEN_REFRESHED. That can
           // create a refresh loop when the SDK is already refreshing a session.
