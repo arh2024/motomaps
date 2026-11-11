@@ -1,3 +1,5 @@
 app copy.js
 index copy.html
 style copy.css
+/android-app/build/
+/android-app/debug.keystore

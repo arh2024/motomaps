@@ -4740,6 +4740,13 @@ html[data-theme="dark"] .bottom-nav .nav-create-icon { border-color: #26343f; }
   .bottom-nav .nav-create-icon { width:36px; height:36px; margin-top:-16px; border-width:2px; font-size:24px; }
   .map-controls { right:12px; bottom:calc(var(--nav-height) + 14px); }
   .location-control { width:48px; height:48px; }
+  .ride-detail-sheet {
+    bottom:calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 10px);
+    max-height:min(42vh, 280px);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    padding-bottom:max(16px, env(safe-area-inset-bottom, 0px));
+  }
 }
 
 

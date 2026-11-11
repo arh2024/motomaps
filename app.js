@@ -230,6 +230,9 @@ let routeRequestSerial = 0;
 let meetingMarker = null;
 
 let meetingLocation = null;
+let addressSearchTimer = null;
+let addressSearchController = null;
+let addressSearchSerial = 0;
 
 let rideMarkers = [];
 let mapSidebarRides = [];
@@ -1764,6 +1767,15 @@ function setMeetingLocation(lat, lng, label) {
   updateLocationStatus();
 }
 
+function updateLocationStatus() {
+  const status = document.getElementById('locationStatus');
+  if (status) {
+    status.textContent = meetingLocation
+      ? '📍 ' + meetingLocation.label
+      : '📍 Точку збору не вибрано';
+  }
+}
+
 function chooseLocation() {
   choosingLocation = true;
   showMap();
@@ -1811,162 +1823,103 @@ map.on(
 // =========================================================
 
 async function searchMeetingAddress() {
+  const input = document.getElementById('rideAddress');
+  const results = document.getElementById('addressResults');
+  if (!input || !results) return;
 
-  const input =
-    document.getElementById(
-      'rideAddress'
-    );
+  const query = input.value.trim();
+  const requestId = ++addressSearchSerial;
+  if (addressSearchController) addressSearchController.abort();
 
-
-  const results =
-    document.getElementById(
-      'addressResults'
-    );
-
-
-  if (!input || !results) {
+  if (query.length < 3) {
+    results.replaceChildren();
+    results.style.display = 'none';
     return;
   }
 
-
-  const query =
-    input.value.trim();
-
-
-  if (!query) {
-
-    alert(
-      'Введіть адресу або місце.'
-    );
-
-    return;
-
-  }
-
-
-  results.innerHTML =
-    '<div class="address-result">🔎 Пошук...</div>';
-
-  results.style.display =
-    'block';
-
+  results.innerHTML = '<div class="address-result address-result-status">🔎 Шукаю адресу…</div>';
+  results.style.display = 'block';
 
   try {
-
-    const url =
-      'https://nominatim.openstreetmap.org/search?' +
-      new URLSearchParams({
-
-        q:
-          query,
-
-        format:
-          'json',
-
-        addressdetails:
-          '1',
-
-        limit:
-          '5',
-
-        'accept-language':
-          'uk'
-
-      });
-
-
-    const response =
-      await fetch(url, {
-
-        headers: {
-
-          'Accept':
-            'application/json'
-
-        }
-
-      });
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        'Помилка пошуку'
-      );
-
-    }
-
-
-    const data =
-      await response.json();
-
-
-    if (!data.length) {
-
-      results.innerHTML =
-        '<div class="address-result">Нічого не знайдено.</div>';
-
-      return;
-
-    }
-
-
-    results.innerHTML =
-      '';
-
-
-    data.forEach(function(place) {
-
-      const button =
-        document.createElement(
-          'button'
-        );
-
-
-      button.type =
-        'button';
-
-      button.className =
-        'address-result';
-
-      button.textContent =
-        place.display_name;
-
-
-      button.onclick =
-        function() {
-
-          selectAddressResult(
-            place
-          );
-
-        };
-
-
-      results.appendChild(
-        button
-      );
-
+    addressSearchController = new AbortController();
+    // Prefer Russian labels when the query is typed in Russian; Photon searches
+    // street names in either alphabet, while `lang` controls result names.
+    const resultLanguage = /[ыэъё]|\b(улица|переулок|проспект|площадь|набережная|шоссе|район)\b/i.test(query)
+      ? 'ru'
+      : 'uk';
+    const url = 'https://photon.komoot.io/api/?' + new URLSearchParams({
+      q: query,
+      limit: '5',
+      lang: resultLanguage,
+      lat: '47.8388',
+      lon: '35.1396',
+      zoom: '12',
+      location_bias_scale: '0.2'
+    });
+    const response = await fetch(url, {
+      signal: addressSearchController.signal,
+      headers: { Accept: 'application/json' }
     });
 
+    if (!response.ok) throw new Error('Помилка пошуку адреси.');
+
+    const data = await response.json();
+    if (requestId !== addressSearchSerial) return;
+    const features = Array.isArray(data.features) ? data.features : [];
+
+    if (!features.length) {
+      results.innerHTML = '<div class="address-result address-result-status">Адресу не знайдено.</div>';
+      return;
+    }
+
+    results.replaceChildren();
+    features.forEach(function(feature) {
+      const properties = feature.properties || {};
+      const coordinates = feature.geometry && feature.geometry.coordinates;
+      if (!Array.isArray(coordinates) || coordinates.length < 2) return;
+
+      const street = [properties.street, properties.housenumber].filter(Boolean).join(' ');
+      const placeName = properties.name && properties.name !== street ? properties.name : '';
+      const locality = properties.city || properties.town || properties.village || properties.municipality || properties.district || properties.county;
+      const label = [street || placeName || properties.suburb, locality, properties.state]
+        .filter(function(value, index, values) {
+          return value && values.indexOf(value) === index;
+        })
+        .join(', ') || properties.name || query;
+      const place = {
+        lat: coordinates[1],
+        lon: coordinates[0],
+        display_name: label
+      };
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'address-result';
+      button.textContent = label;
+      button.addEventListener('click', function() {
+        selectAddressResult(place);
+      });
+      results.appendChild(button);
+    });
+
+    if (!results.children.length) {
+      results.innerHTML = '<div class="address-result address-result-status">Адресу не знайдено.</div>';
+    }
   } catch (error) {
-
-    console.error(
-      error
-    );
-
-
-    results.innerHTML =
-      '<div class="address-result">Не вдалося виконати пошук.</div>';
-
+    if (error.name === 'AbortError' || requestId !== addressSearchSerial) return;
+    console.error('Помилка пошуку адреси:', error);
+    results.innerHTML = '<div class="address-result address-result-status">Не вдалося завантажити підказки.</div>';
   }
-
 }
 
 
 function selectAddressResult(
   place
 ) {
+
+  clearTimeout(addressSearchTimer);
+  if (addressSearchController) addressSearchController.abort();
+  addressSearchSerial += 1;
 
   const lat =
     Number(place.lat);
@@ -5636,22 +5589,39 @@ document.addEventListener(
     // Enter у пошуку адреси.
 
     const rideAddress = document.getElementById('rideAddress');
-    if (rideAddress) rideAddress.addEventListener(
-        'keydown',
-        function(event) {
-
-          if (
-            event.key === 'Enter'
-          ) {
-
-            event.preventDefault();
-
-            searchMeetingAddress();
-
-          }
-
+    if (rideAddress) {
+      rideAddress.addEventListener('input', function() {
+        meetingLocation = null;
+        if (meetingMarker) {
+          meetingMarker.remove();
+          meetingMarker = null;
         }
-      );
+        updateLocationStatus();
+
+        clearTimeout(addressSearchTimer);
+        if (addressSearchController) addressSearchController.abort();
+        addressSearchSerial += 1;
+
+        if (rideAddress.value.trim().length < 3) {
+          const results = document.getElementById('addressResults');
+          if (results) {
+            results.replaceChildren();
+            results.style.display = 'none';
+          }
+          return;
+        }
+
+        addressSearchTimer = setTimeout(searchMeetingAddress, 300);
+      });
+
+      rideAddress.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          clearTimeout(addressSearchTimer);
+          searchMeetingAddress();
+        }
+      });
+    }
 
 
     // Перевірка сесії.
